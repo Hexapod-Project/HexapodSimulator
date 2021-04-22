@@ -11,32 +11,32 @@ void prepareSettings(App::Settings *settings)
 
 void HexapodSimulator::setup()
 {
-    mSceneTwoDLegIK.setup();    
+    mScene2DLegIK.setup();    
 }
 
 void HexapodSimulator::mouseDown(MouseEvent event)
 {
-    mSceneTwoDLegIK.mouseDown(event);
+    mScene2DLegIK.mouseDown(event);
 }
 
 void HexapodSimulator::mouseDrag(MouseEvent event)
 {
-    mSceneTwoDLegIK.mouseDrag(event);
+    mScene2DLegIK.mouseDrag(event);
 }
 
 void HexapodSimulator::mouseUp(MouseEvent event)
 {
-    mSceneTwoDLegIK.mouseUp(event);
+    mScene2DLegIK.mouseUp(event);
 }
 
 void HexapodSimulator::update()
 {
-    mSceneTwoDLegIK.update();
+    mScene2DLegIK.update();
 }
 
 void HexapodSimulator::draw()
 {
-    mSceneTwoDLegIK.draw();
+    mScene2DLegIK.draw();
 }
 
 CINDER_APP(HexapodSimulator, RendererGl, prepareSettings)

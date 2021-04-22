@@ -1,7 +1,7 @@
-#include "SceneTwoDLegIK.h"
+#include "Scene2DLegIK.h"
 #include "cinder/CinderImGui.h"
 
-void SceneTwoDLegIK::setup()
+void Scene2DLegIK::setup()
 {
     //And display info
     mBgColor = Color(0, 0, 0);
@@ -16,7 +16,7 @@ void SceneTwoDLegIK::setup()
     mLegY = mFloorY - 100.0f;
     mLegPos = vec2(mLegX, mLegY);
 
-    mLeg = TwoDLeg(mLegPos, mFloorY, mHipLength, mFemurLength, mTibiaLength);
+    mLeg = Leg2D(mLegPos, mFloorY, mHipLength, mFemurLength, mTibiaLength);
 
     mFeetPos = mLeg.getFeetPos();
     mFeetX = mFeetPos.x;
@@ -26,22 +26,22 @@ void SceneTwoDLegIK::setup()
     drawTexts();
 }
 
-void SceneTwoDLegIK::mouseDown(MouseEvent event)
+void Scene2DLegIK::mouseDown(MouseEvent event)
 {
     mLeg.mouseDown(event.getPos());
 }
 
-void SceneTwoDLegIK::mouseDrag(MouseEvent event)
+void Scene2DLegIK::mouseDrag(MouseEvent event)
 {
     mLeg.mouseDrag(processMousePos(event.getPos()));
 }
 
-void SceneTwoDLegIK::mouseUp(MouseEvent event)
+void Scene2DLegIK::mouseUp(MouseEvent event)
 {
     mLeg.mouseUp(processMousePos(event.getPos()));
 }
 
-vec2 SceneTwoDLegIK::processMousePos(vec2 mousePos)
+vec2 Scene2DLegIK::processMousePos(vec2 mousePos)
 {
     if (mousePos.y >= mFloorY)
         mousePos.y = mFloorY;
@@ -49,7 +49,7 @@ vec2 SceneTwoDLegIK::processMousePos(vec2 mousePos)
     return mousePos;
 }
 
-void SceneTwoDLegIK::drawGUI()
+void Scene2DLegIK::drawGUI()
 {
     ImGui::Begin("Properties");
     ImGui::InputFloat("Floor Height", &mFloorHeight, 1, 5, 0);
@@ -71,7 +71,7 @@ void SceneTwoDLegIK::drawGUI()
     ImGui::End();
 }
 
-void SceneTwoDLegIK::update()
+void Scene2DLegIK::update()
 {
     drawGUI();
     vec2 currLegPos = mLeg.getPos();
@@ -112,12 +112,12 @@ void SceneTwoDLegIK::update()
     //Update leg lengths
     if(mHipLength != mLeg.mHipLength || mFemurLength != mLeg.mFemurLength || mTibiaLength != mLeg.mTibiaLength)
     {
-        mLeg = TwoDLeg(mLegPos, mFloorY, mHipLength, mFemurLength, mTibiaLength);
+        mLeg = Leg2D(mLegPos, mFloorY, mHipLength, mFemurLength, mTibiaLength);
         mLeg.moveFeet(mFeetPos);
     }
 }
 
-void SceneTwoDLegIK::draw()
+void Scene2DLegIK::draw()
 {
     gl::clear(mBgColor, true);
 
@@ -132,7 +132,7 @@ void SceneTwoDLegIK::draw()
     gl::draw(mTextTexture);
 }
 
-void SceneTwoDLegIK::drawTexts()
+void Scene2DLegIK::drawTexts()
 {
     TextBox textBox = TextBox().size(getWindowWidth() / 3, 150);
     textBox.text("2D Leg Inverse Kinematics");

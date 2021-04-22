@@ -1,8 +1,8 @@
-#include "TwoDLeg.h"
+#include "Leg2D.h"
 
-TwoDLeg::TwoDLeg() {}
+Leg2D::Leg2D() {}
 
-TwoDLeg::TwoDLeg(vec2 startPos, float floorY, float hipLength, float femurLength, float tibiaLength)
+Leg2D::Leg2D(vec2 startPos, float floorY, float hipLength, float femurLength, float tibiaLength)
 {
     //Hip
     mNodes.push_back(Node(startPos, Color(1, 0, 0), false));
@@ -45,7 +45,7 @@ TwoDLeg::TwoDLeg(vec2 startPos, float floorY, float hipLength, float femurLength
     mSelNodeIdx = -1;
 }
 
-void TwoDLeg::mouseDown(vec2 mousePos)
+void Leg2D::mouseDown(vec2 mousePos)
 {
     if (isPointInCircleSqr(mousePos, mNodes[mNodesLastIdx].getPos(), Node::sNodeRadiusSqr))
         mSelNodeIdx = mNodesLastIdx;
@@ -53,7 +53,7 @@ void TwoDLeg::mouseDown(vec2 mousePos)
         mSelNodeIdx = 0;
 }
 
-void TwoDLeg::mouseDrag(vec2 mousePos)
+void Leg2D::mouseDrag(vec2 mousePos)
 {
     mousePos = clamp(mousePos, vec2(0, 0), vec2(app::getWindowWidth(), app::getWindowHeight()));
 
@@ -63,13 +63,13 @@ void TwoDLeg::mouseDrag(vec2 mousePos)
         moveFeet(mousePos);
 }
 
-void TwoDLeg::mouseUp(vec2 mousePos)
+void Leg2D::mouseUp(vec2 mousePos)
 {
     mFeetLastPos = mNodes[mNodesLastIdx].getPos();
     mSelNodeIdx = -1;
 }
 
-void TwoDLeg::moveFeet(vec2 pos)
+void Leg2D::moveFeet(vec2 pos)
 {
     vec2 femurPos = mNodes[1].getPos();
     vec2 diff = pos - femurPos;
@@ -115,7 +115,7 @@ void TwoDLeg::moveFeet(vec2 pos)
     mFeetLastPos = pos;
 }
 
-void TwoDLeg::moveWithIK(vec2 pos)
+void Leg2D::moveWithIK(vec2 pos)
 {        
     //Subtract the hipToFemur offset from the mousePos to get the position of the femur node
     vec2 femurNewPos = pos - mHipToFemurOffset;
@@ -141,22 +141,22 @@ void TwoDLeg::moveWithIK(vec2 pos)
     moveFeet(mFeetLastPos);
 }
 
-void TwoDLeg::moveTo(vec2 newPos)
+void Leg2D::moveTo(vec2 newPos)
 {
     mNodes[0].moveTo(newPos);
 }
 
-vec2 TwoDLeg::getPos()
+vec2 Leg2D::getPos()
 {
     return mNodes[0].getPos();
 }
 
-vec2 TwoDLeg::getFeetPos()
+vec2 Leg2D::getFeetPos()
 {
     return mNodes[mNodesLastIdx].getPos();
 }
 
-void TwoDLeg::draw()
+void Leg2D::draw()
 {
     mNodes[0].draw();
     for (int i = 1; i < mNodes.size(); i++)

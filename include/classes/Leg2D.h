@@ -5,10 +5,10 @@
 
 using namespace ci;
 
-class TwoDLeg {
+class Leg2D {
 public:
-    TwoDLeg();
-    TwoDLeg(vec2 startPos, float floorY, float hipLength, float femurLength, float tibiaLength);
+    Leg2D();
+    Leg2D(vec2 startPos, float floorY, float hipLength, float femurLength, float tibiaLength);
     void mouseDown(vec2 mousePos);
     void mouseDrag(vec2 mousePos);
     void mouseUp(vec2 mousePos);

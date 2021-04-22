@@ -2,7 +2,7 @@
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
 #include "cinder/app/RendererGl.h"
-#include "scenes/SceneTwoDLegIK.h"
+#include "scenes/Scene2DLegIK.h"
 
 using namespace ci;
 using namespace ci::app;
@@ -16,5 +16,5 @@ public:
     void update() override;
     void draw() override;
 private:
-    SceneTwoDLegIK mSceneTwoDLegIK;
+    Scene2DLegIK mScene2DLegIK;
 };

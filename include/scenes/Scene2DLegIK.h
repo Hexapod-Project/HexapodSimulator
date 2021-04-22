@@ -1,12 +1,12 @@
 #pragma once
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
-#include "../classes/TwoDLeg.h"
+#include "../classes/Leg2D.h"
 
 using namespace ci;
 using namespace ci::app;
 
-class SceneTwoDLegIK {
+class Scene2DLegIK {
 public:
     void setup();
     void mouseDown(MouseEvent event);
@@ -17,7 +17,7 @@ public:
     void update();
     void draw();
 private:
-    TwoDLeg mLeg;
+    Leg2D mLeg;
     Color mBgColor;
     
     float mFloorHeight;
