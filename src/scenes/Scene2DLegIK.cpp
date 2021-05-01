@@ -1,5 +1,6 @@
 #include "Scene2DLegIK.h"
 #include "cinder/CinderImGui.h"
+#include "cinder/CameraUi.h"
 
 void Scene2DLegIK::setup()
 {
@@ -18,11 +19,10 @@ void Scene2DLegIK::setup()
 
     mLeg = Leg2D(mLegPos, mFloorY, mHipLength, mFemurLength, mTibiaLength);
 
-    mFeetPos = mLeg.getFeetPos();
+    mFeetPos = mLeg.getFootPos();
     mFeetX = mFeetPos.x;
-    mFeetY = mFeetPos.y;
+    mFeetY = mFeetPos.y;    
 
-    ImGui::Initialize();
     drawTexts();
 }
 
@@ -54,14 +54,14 @@ void Scene2DLegIK::drawGUI()
     ImGui::Begin("Properties");
     ImGui::InputFloat("Floor Height", &mFloorHeight, 1, 5, 0);
 
-    ImGui::Separator();    
+    ImGui::Separator();
     ImGui::Columns(2);
     ImGui::DragFloat("Leg X", &mLegX, 1.0f, 0, getWindowWidth(), "%.1f");
-    ImGui::DragFloat("Feet X", &mFeetX, 1.0f, 0, mFloorY, "%.1f");
+    ImGui::DragFloat("Foot X", &mFeetX, 1.0f, 0, mFloorY, "%.1f");
     ImGui::NextColumn();
     ImGui::DragFloat("Leg Y", &mLegY, 1.0f, 0, mFloorY, "%.1f");
-    ImGui::DragFloat("Feet Y", &mFeetY, 1.0f, 0, mFloorY, "%.1f");
-    
+    ImGui::DragFloat("Foot Y", &mFeetY, 1.0f, 0, mFloorY, "%.1f");
+
     ImGui::Separator();
     ImGui::Columns(1);
     ImGui::InputFloat("Hip Length", &mHipLength, 1.0f, 1.0f, 1);
@@ -96,7 +96,7 @@ void Scene2DLegIK::update()
     else if (newLegPos != mLegPos)
         mLeg.moveWithIK(newLegPos);
 
-    vec2 currFeetPos = mLeg.getFeetPos();
+    vec2 currFeetPos = mLeg.getFootPos();
     vec2 newFeetPos = vec2(mFeetX, mFeetY);
     //Update the feet position values if the values were change
     if (currFeetPos != mFeetPos)
@@ -107,36 +107,34 @@ void Scene2DLegIK::update()
     }
     //Move the feet position based on the new feet position from the input
     else if (newFeetPos != mFeetPos)
-        mLeg.moveFeet(newFeetPos);
+        mLeg.moveFoot(newFeetPos);
 
     //Update leg lengths
-    if(mHipLength != mLeg.mHipLength || mFemurLength != mLeg.mFemurLength || mTibiaLength != mLeg.mTibiaLength)
+    if (mHipLength != mLeg.mHipLength || mFemurLength != mLeg.mFemurLength || mTibiaLength != mLeg.mTibiaLength)
     {
         mLeg = Leg2D(mLegPos, mFloorY, mHipLength, mFemurLength, mTibiaLength);
-        mLeg.moveFeet(mFeetPos);
+        mLeg.moveFoot(mFeetPos);
     }
 }
 
 void Scene2DLegIK::draw()
 {
+    gl::ScopedMatrices matrix();
+
     gl::clear(mBgColor, true);
 
+    gl::color(Color::white());
+    gl::draw(mTextTexture);
+
     //Draw floor line
-    gl::color(Color(1, 1, 1));
+    gl::color(Color::white());
     gl::drawLine(vec2(0, mFloorY), vec2(getWindowWidth(), mFloorY));
 
     //Draw leg
     mLeg.draw();
-
-    gl::color(Color(1, 1, 1));
-    gl::draw(mTextTexture);
 }
 
 void Scene2DLegIK::drawTexts()
 {
-    TextBox textBox = TextBox().size(getWindowWidth() / 3, 150);
-    textBox.text("2D Leg Inverse Kinematics");
-    textBox.setColor(Color(1, 1, 1));
-    textBox.setBackgroundColor(ColorA(0, 0, 0, 0));
-    mTextTexture = gl::Texture2d::create(textBox.render());
+    mTextTexture = createTextTexture("2D Leg Inverse Kinematics", vec2(getWindowWidth() / 3, 150), Color(1, 1, 1), ColorA(0, 0, 0, 0));
 }

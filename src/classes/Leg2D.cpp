@@ -10,7 +10,7 @@ Leg2D::Leg2D(vec2 startPos, float floorY, float hipLength, float femurLength, fl
     mNodes.push_back(Node(startPos + vec2(hipLength, 0), Color(0, 1, 0)));
     //Tibia
     mNodes.push_back(Node(startPos + vec2(hipLength + femurLength, 0), Color(0, 0, 1)));
-    //Feet
+    //Foot
     mNodes.push_back(Node(startPos + vec2(hipLength + femurLength + tibiaLength, 0), Color(1, 1, 0)));
 
     //Set Femur as Hip's child
@@ -22,7 +22,7 @@ Leg2D::Leg2D(vec2 startPos, float floorY, float hipLength, float femurLength, fl
     //Set Femur as Tibia's axis
     mNodes[2].setAxis(&mNodes[1]);
 
-    //Set Tibia as Feet's axis
+    //Set Tibia as Foot's axis
     mNodes[3].setAxis(&mNodes[2]);
 
     mHipToFemurOffset = mNodes[0].getPos() - mNodes[1].getPos();
@@ -40,8 +40,8 @@ Leg2D::Leg2D(vec2 startPos, float floorY, float hipLength, float femurLength, fl
     mLegLengthSqr = mLegLength * mLegLength;
 
     mNodesLastIdx = mNodes.size() - 1;
-    Node feetNode = mNodes[mNodesLastIdx];
-    moveFeet(vec2(feetNode.getPos().x - tibiaLength, floorY));    
+    Node footNode = mNodes[mNodesLastIdx];
+    moveFoot(vec2(footNode.getPos().x - tibiaLength, floorY));    
     mSelNodeIdx = -1;
 }
 
@@ -60,16 +60,16 @@ void Leg2D::mouseDrag(vec2 mousePos)
     if (mSelNodeIdx == 0)
         moveWithIK(mousePos);
     else if (mSelNodeIdx == mNodesLastIdx)
-        moveFeet(mousePos);
+        moveFoot(mousePos);
 }
 
 void Leg2D::mouseUp(vec2 mousePos)
 {
-    mFeetLastPos = mNodes[mNodesLastIdx].getPos();
+    mFootLastPos = mNodes[mNodesLastIdx].getPos();
     mSelNodeIdx = -1;
 }
 
-void Leg2D::moveFeet(vec2 pos)
+void Leg2D::moveFoot(vec2 pos)
 {
     vec2 femurPos = mNodes[1].getPos();
     vec2 diff = pos - femurPos;
@@ -81,6 +81,7 @@ void Leg2D::moveFeet(vec2 pos)
 
     if (dist > mFemurLength + mTibiaLength)
         dist = mFemurLength + mTibiaLength;
+    //The distance cannot be less than the difference between the femur and tibia length
     else if (dist < abs(mFemurLength - mTibiaLength))
         dist = abs(mFemurLength - mTibiaLength);
 
@@ -112,7 +113,7 @@ void Leg2D::moveFeet(vec2 pos)
     mNodes[1].rotate(femurAngle);
     mNodes[2].rotate(tibiaAngle);
 
-    mFeetLastPos = pos;
+    mFootLastPos = pos;
 }
 
 void Leg2D::moveWithIK(vec2 pos)
@@ -120,9 +121,9 @@ void Leg2D::moveWithIK(vec2 pos)
     //Subtract the hipToFemur offset from the mousePos to get the position of the femur node
     vec2 femurNewPos = pos - mHipToFemurOffset;
 
-    //Get the femur to feet distance using the new femur pos
-    vec2 feetPos = mNodes[3].getPos();
-    vec2 diffFemurToFeet = femurNewPos - feetPos;
+    //Get the femur to foot distance using the new femur pos
+    vec2 footPos = mNodes[3].getPos();
+    vec2 diffFemurToFeet = femurNewPos - footPos;
     float distFemurToFeetSqr = dot(diffFemurToFeet, diffFemurToFeet);
 
     //If the distance of femur node new position is longer than the leg length
@@ -132,13 +133,13 @@ void Leg2D::moveWithIK(vec2 pos)
         float radians = atan2(diffFemurToFeet.y, diffFemurToFeet.x);
         //Rotate the around the feet node with the leg length and the angle obtained
         //and add the hipToFemur offset
-        pos = rotatePoint(feetPos, mLegLength, radians) + mHipToFemurOffset;
+        pos = rotateAround(footPos, mLegLength, radians) + mHipToFemurOffset;
     }
     
     mNodes[0].moveTo(pos);
 
     //Recalculate the IK angles since the position has been moved
-    moveFeet(mFeetLastPos);
+    moveFoot(mFootLastPos);
 }
 
 void Leg2D::moveTo(vec2 newPos)
@@ -151,7 +152,7 @@ vec2 Leg2D::getPos()
     return mNodes[0].getPos();
 }
 
-vec2 Leg2D::getFeetPos()
+vec2 Leg2D::getFootPos()
 {
     return mNodes[mNodesLastIdx].getPos();
 }

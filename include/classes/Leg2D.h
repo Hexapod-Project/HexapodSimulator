@@ -14,9 +14,9 @@ public:
     void mouseUp(vec2 mousePos);
     void moveWithIK(vec2 pos);
     void moveTo(vec2 pos);   
-    void moveFeet(vec2 pos);
+    void moveFoot(vec2 pos);
     vec2 getPos(); 
-    vec2 getFeetPos();
+    vec2 getFootPos();
     void draw();
 
     float mHipLength;
@@ -36,7 +36,7 @@ private:
        
     float mTibiaLengthSqr; 
    
-    vec2 mFeetLastPos;
+    vec2 mFootLastPos;
    
     vec2 mHipToFemurOffset;        
 };

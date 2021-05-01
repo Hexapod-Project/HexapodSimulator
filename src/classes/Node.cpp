@@ -56,7 +56,7 @@ void Node::rotateAroundAxis(float radians)
     vec2 axisPos = mAxis->getPos();
     mDistToAxis = distance(mPos, axisPos);
     vec2 prevPos = mPos;
-    mPos = rotatePoint(axisPos, mDistToAxis, radians);    
+    mPos = rotateAround(axisPos, mDistToAxis, radians);    
 
     if (mChild != NULL)
         mChild->translate(mPos - prevPos);
