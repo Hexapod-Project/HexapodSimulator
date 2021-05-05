@@ -3,25 +3,21 @@
 #include "cinder/gl/gl.h"
 #include "Servo.h"
 #include "Foot.h"
+#include "Node3D.h"
 
 using namespace ci;
 
-class Leg3D
+class Leg3D:public Node3D
 {
 public:
     Leg3D();
-    Leg3D(vec3 pos, float hipLength, float femurLength, float tibiaLength);
-    void setHipAngle(float angle);
-    void setFemurAngle(float angle);
-    void setTibiaAngle(float angle);
+    Leg3D(vec3 pos, float hipLength, float femurLength, float tibiaLength, bool isRightLeg = false);
     float getHipAngle();
     float getFemurAngle();
     float getTibiaAngle();
-    vec3 getFootPos();
+    vec3 getFootWorldPos();
     void setFootTargetPos(vec3 targetPos);
-    void calculateIK();
-    vec3 getHipPos();
-    void setHipPos(vec3 pos);
+    void calculateIK();            
     void setup();
     void update();
     void draw();
@@ -32,14 +28,17 @@ private:
     float mTibiaLength;
     float mTibiaLengthSqr;
     float mLegLength;
-    float mLegLengthSqr;    
-
+    float mLegLengthSqr;
+    
     Servo mHipServo;
     Servo mFemurServo;
     Servo mTibiaServo;
     Foot mFoot;
     
-    gl::BatchRef mFootTargetMesh;
-    vec3 mFootTargetPos;
-    mat4 mTargetFootMatrix;    
+    gl::BatchRef mTargetFootPosMesh;
+    vec3 mTargetFootPos;
+    mat4 mTargetFootPosMatrix;
+
+    //For debugging purposes
+    mat4 mLocalFootPosMatrix;        
 };

@@ -1,4 +1,5 @@
 #include "Leg2D.h"
+#include "Tools.h"
 
 Leg2D::Leg2D() {}
 
@@ -41,7 +42,7 @@ Leg2D::Leg2D(vec2 startPos, float floorY, float hipLength, float femurLength, fl
 
     mNodesLastIdx = mNodes.size() - 1;
     Node footNode = mNodes[mNodesLastIdx];
-    moveFoot(vec2(footNode.getPos().x - tibiaLength, floorY));    
+    moveFoot(vec2(footNode.getPos().x - tibiaLength, floorY));
     mSelNodeIdx = -1;
 }
 
@@ -117,7 +118,7 @@ void Leg2D::moveFoot(vec2 pos)
 }
 
 void Leg2D::moveWithIK(vec2 pos)
-{        
+{
     //Subtract the hipToFemur offset from the mousePos to get the position of the femur node
     vec2 femurNewPos = pos - mHipToFemurOffset;
 
@@ -135,7 +136,7 @@ void Leg2D::moveWithIK(vec2 pos)
         //and add the hipToFemur offset
         pos = rotateAround(footPos, mLegLength, radians) + mHipToFemurOffset;
     }
-    
+
     mNodes[0].moveTo(pos);
 
     //Recalculate the IK angles since the position has been moved
@@ -162,6 +163,7 @@ void Leg2D::draw()
     mNodes[0].draw();
     for (int i = 1; i < mNodes.size(); i++)
     {
+        gl::ScopedColor color(mNodes[i - 1].mColor);
         Node node = mNodes[i];
         gl::drawLine(mNodes[i - 1].getPos(), node.getPos());
         node.draw();

@@ -2,30 +2,25 @@
 
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
-#include "Servo.h"
+#include "Node3D.h"
 
 using namespace ci;
 
 //Declare first to resolve compiler 'does not name a type error'
 class Servo;
 
-class Foot
+class Foot : public Node3D
 {
 public:
-    Foot();
-    void setColor(Color color);
-    void setBase(vec3 startPos, vec3 rotations);
-    void setParent(Servo *parent);
-    vec3 getPos();
-    Servo* getParent();
-    void updateMatrix();
+    Foot(){};
+    Foot(vec3 dir);
+    void setColor(Color color);       
+    void setDir(vec3 dir);     
     void draw();
+
 private:
-    Color mColor;
-    mat4 mBaseMatrix;
-    mat4 mLocalMatrix;
+    Color mColor;    
+    vec3 mDir;
 
-    gl::BatchRef mMesh;
-
-    Servo *mParent = nullptr;
+    gl::BatchRef mMesh;    
 };

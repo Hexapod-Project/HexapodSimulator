@@ -1,7 +1,6 @@
 #pragma once
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
-#include "../tools/Tools.h"
 #include "../classes/Leg2D.h"
 #include "../scenes/Scene.h"
 
@@ -17,6 +16,7 @@ public:
     void mouseUp(MouseEvent event) override;    
     void update() override;
     void draw() override;
+    void drawTexts() override;
 
 private:
     Leg2D mLeg;
@@ -40,6 +40,5 @@ private:
     gl::TextureRef mTextTexture;    
 
     vec2 processMousePos(vec2 mousePos);
-    void drawGUI();
-    void drawTexts();
+    void drawGUI();    
 };

@@ -1,7 +1,6 @@
 #pragma once
 #include "cinder/app/App.h"
 #include "cinder/CameraUi.h"
-#include "../tools/Tools.h"
 #include "Leg3D.h"
 #include "Scene.h"
 
@@ -16,9 +15,11 @@ public:
     void setup() override;
     void update() override;
     void draw() override;
-    void toggleCamUi(bool enable);
+    void toggleCamUi(bool enable) override;
+    void drawTexts() override;
 
 private:
+    Node3D mBody;
     Leg3D mLeg;
 
     CameraPersp mCamera;
@@ -39,9 +40,11 @@ private:
     float mFootY;
     float mFootZ;
 
-    float mHipX;
-    float mHipY;
-    float mHipZ;
+    float mBodyX;
+    float mBodyY;
+    float mBodyZ;
 
-    void drawTexts();
+    float mBodyRoll;
+    float mBodyYaw;
+    float mBodyPitch;
 };

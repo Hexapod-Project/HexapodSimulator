@@ -1,6 +1,7 @@
 #include "Scene2DLegIK.h"
 #include "cinder/CinderImGui.h"
 #include "cinder/CameraUi.h"
+#include "Tools.h"
 
 void Scene2DLegIK::setup()
 {
@@ -118,9 +119,7 @@ void Scene2DLegIK::update()
 }
 
 void Scene2DLegIK::draw()
-{
-    gl::ScopedMatrices matrix();
-
+{    
     gl::clear(mBgColor, true);
 
     gl::color(Color::white());

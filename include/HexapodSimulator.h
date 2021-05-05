@@ -29,6 +29,6 @@ private:
     const std::vector<std::string> mSceneNames = {"2D Leg IK", "3D Leg IK", "Hexapod"};
     const std::vector<Scene*> mScenes = {&mScene2DLegIK, &mScene3DLegIK, &mSceneHexapod};
 
-    void updateScene();
+    void checkChangeScene();
     void drawGUI();
 };

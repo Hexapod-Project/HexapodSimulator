@@ -1,15 +1,15 @@
 #include "Scene3DLegIK.h"
 #include "cinder/CinderImGui.h"
-
-bool printUpdate2 = true;
+#include "Tools.h"
 
 void Scene3DLegIK::setup()
 {
-    vec3 legPos = vec3(0, 0.25, -2);
-    mLeg = Leg3D(legPos, 1.0f, 2.0f, 2.5f);
+    vec3 legPos = vec3(-2, 0, 0);
+    mLeg = Leg3D(legPos, 1.0f, 2.0f, 2.5f, true);
     mLeg.setup();
+    mLeg.setParent(&mBody);    
 
-    mCamera.lookAt(vec3(-15, 2, 0), vec3(0));
+    mCamera.lookAt(vec3(0, 10, 15), vec3(0));
     mCamera.setPerspective(40.0f, getWindowAspectRatio(), 0.01f, 100.0f);
     mCameraUi = CameraUi(&mCamera, getWindow());
 
@@ -19,15 +19,10 @@ void Scene3DLegIK::setup()
     mWorldAxisViewportSize = vec2(getWindowWidth() / 5, getWindowHeight() / 5);
     mWorldAxisViewportPos = vec2(getWindowWidth() - mWorldAxisViewportSize.x, 0);
 
-    vec3 footPos = mLeg.getFootPos();
-    mFootX = footPos.x;
-    mFootY = 0;
-    mFootZ = footPos.z - 2.5 / 2;
-
-    vec3 hipPos = mLeg.getHipPos();
-    mHipX = hipPos.x;
-    mHipY = hipPos.y;
-    mHipZ = hipPos.z;
+    vec3 footWorldPos = mLeg.getFootWorldPos();
+    mFootX = footWorldPos.x;
+    mFootY = footWorldPos.y;
+    mFootZ = footWorldPos.z;
 
     drawTexts();
 
@@ -41,24 +36,36 @@ void Scene3DLegIK::drawGUI()
     ImGui::DragFloat("Femur Angle", &mFemurAngle, 0.5, -360, 360, "%.1f");
     ImGui::DragFloat("Tibia Angle", &mTibiaAngle, 0.5, -360, 360, "%.1f");
     ImGui::Separator();
-    ImGui::Text("Hip Position");
+
+    ImGui::Text("Parent Position");
     ImGui::Columns(3);
-    ImGui::DragFloat("Hip X", &mHipX, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("pX", &mBodyX, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
     ImGui::NextColumn();
-    ImGui::DragFloat("Hip Y", &mHipY, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("pY", &mBodyY, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
     ImGui::NextColumn();
-    ImGui::DragFloat("Hip Z", &mHipZ, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("pZ", &mBodyZ, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
 
     ImGui::Columns(1);
 
+    ImGui::Text("Parent Rotation");
+    ImGui::Columns(3);
+    ImGui::DragFloat("Roll", &mBodyRoll, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::NextColumn();
+    ImGui::DragFloat("Yaw", &mBodyYaw, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::NextColumn();
+    ImGui::DragFloat("Pitch", &mBodyPitch, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+
+    ImGui::Columns(1);
+    
     ImGui::Separator();
     ImGui::Text("Foot Position");
     ImGui::Columns(3);
-    ImGui::DragFloat("Foot X", &mFootX, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("ftX", &mFootX, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
     ImGui::NextColumn();
-    ImGui::DragFloat("Foot Y", &mFootY, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("ftY", &mFootY, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
     ImGui::NextColumn();
-    ImGui::DragFloat("Foot Z", &mFootZ, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("ftZ", &mFootZ, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+
     ImGui::End();
 }
 
@@ -66,7 +73,10 @@ void Scene3DLegIK::update()
 {
     mWorldAxisMatrix = translate(mCamera.getEyePoint()) * toMat4(mCamera.getOrientation()) * translate(vec3(0, 0, -5)) / toMat4(mCamera.getOrientation());
 
-    mLeg.setHipPos(vec3(mHipX, mHipY, mHipZ));
+    mBody.mLocalPos = vec3(mBodyX, mBodyY, mBodyZ);
+    mBody.mLocalRot = vec3(toRadians(mBodyRoll), toRadians(mBodyYaw), toRadians(mBodyPitch));
+    mBody.updateMatrix();
+
     mLeg.setFootTargetPos(vec3(mFootX, mFootY, mFootZ));
     mLeg.update();
 
@@ -97,6 +107,10 @@ void Scene3DLegIK::draw()
         mWirePlane->draw();
 
         mLeg.draw();
+
+        if(mIsDrawCoord)
+            //The body will draw the child coordinates as well so just calling body is sufficient
+            mBody.drawCoord();
     }
 
     {
@@ -121,5 +135,5 @@ void Scene3DLegIK::toggleCamUi(bool enable)
         mCameraUi.disable();
     else if (enable && !mCameraUi.isEnabled())
         //Somehow using .enable() function does not work so just reinitialize
-        mCameraUi = CameraUi(&mCamera, getWindow());    
+        mCameraUi = CameraUi(&mCamera, getWindow());
 }

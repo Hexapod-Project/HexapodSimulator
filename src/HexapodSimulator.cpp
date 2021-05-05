@@ -1,7 +1,9 @@
 #include "HexapodSimulator.h"
 #include "cinder/CinderImGui.h"
 
-const int START_SCENE_IDX = 0;
+//This index change which scenes is shown first on start
+//*Can be used to set to the scene index that is currently being developed
+const int START_SCENE_IDX = 2;
 
 void prepareSettings(App::Settings *settings)
 {
@@ -38,32 +40,22 @@ void HexapodSimulator::update()
 {
     drawGUI();
 
-    updateScene();
+    checkChangeScene();
 
     mCurrScene->update();
 }
 
-void HexapodSimulator::updateScene()
+void HexapodSimulator::checkChangeScene()
 {
     if (mComboSceneIdx != mSceneIdx)
     {
         mSceneIdx = mComboSceneIdx;
 
-        switch (mSceneIdx)
-        {
-        default:
-        case 0:
-            mScene3DLegIK.toggleCamUi(false);
-            break;
-        case 1:
-            mScene3DLegIK.toggleCamUi(true);
-            break;
-        case 2:
-            mScene3DLegIK.toggleCamUi(false);
-            break;
-        }
-
+        //Turns off the camera ui before switching scene so that 2D scenes mouse cursor can be used
+        mCurrScene->toggleCamUi(false);
         mCurrScene = mScenes[mSceneIdx];
+        //Turns on the camera ui of the new scene if it has a camera ui
+        mCurrScene->toggleCamUi(true);
 
         mCurrScene->setup();
     }
@@ -73,6 +65,7 @@ void HexapodSimulator::drawGUI()
 {
     ImGui::Begin("Hexapod Simulation");
     ImGui::Combo("Scene", &mComboSceneIdx, mSceneNames);
+    ImGui::Checkbox("Draw Coord Frame", &mCurrScene->mIsDrawCoord);
     ImGui::End();
 }
 

@@ -1,7 +1,6 @@
 #pragma once
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
-#include "../tools/Tools.h"
 
 using namespace ci;
 
@@ -24,9 +23,9 @@ public:
     static const float sNodeRadius;
     static const float sNodeRadiusSqr; //For performing distance calculations
     bool mIsRotateable;
-private:
-    vec2 mPos;    
     Color mColor;
+private:
+    vec2 mPos;        
     float mRadians;
     float mDistToAxis;    
     Node *mAxis;

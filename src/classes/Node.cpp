@@ -1,4 +1,5 @@
 #include "Node.h"
+#include "Tools.h"
 
 const float Node::sNodeRadius = 8.0f;
 const float Node::sNodeRadiusSqr = Node::sNodeRadius * Node::sNodeRadius;
@@ -105,7 +106,7 @@ void Node::drawTexts()
 
 void Node::draw()
 {
-    gl::color(mColor);
+    gl::ScopedColor color(mColor);
     gl::drawStrokedCircle(mPos, Node::sNodeRadius);    
     
     drawTexts();    

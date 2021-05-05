@@ -1,4 +1,5 @@
 #include "Servo.h"
+#include "Tools.h"
 
 /**
  * @brief 
@@ -25,45 +26,6 @@ void Servo::setColor(Color color)
     mColor = color;
 }
 
-void Servo::setBase(vec3 startPos, vec3 rotation)
-{
-    mPosition = startPos;
-    mRotation = rotation;
-
-    mBaseMatrix = translate(startPos) * toMat4(quat(rotation));
-    mLocalMatrix = mBaseMatrix;
-}
-
-void Servo::setParent(Servo *parent)
-{
-    mParent = parent;
-    mLocalMatrix = mParent->mLocalMatrix * mBaseMatrix;
-
-    if (mParent->mChild != this)
-        mParent->setChild(this);
-}
-
-void Servo::setChild(Servo *child)
-{
-    mChild = child;
-
-    if (mChild->mParent != this)
-        mChild->setParent(this);
-}
-
-void Servo::setFoot(Foot *foot)
-{
-    mFoot = foot;
-
-    if (mFoot->getParent() != this)
-        mFoot->setParent(this);
-}
-
-Foot *Servo::getFoot()
-{
-    return mFoot;
-}
-
 void Servo::setServoAngle(float angle)
 {
     mServoAngle = angle;
@@ -74,53 +36,31 @@ float Servo::getServoAngle()
     return toDegrees(mServoAngle);
 }
 
-mat4 Servo::getLocalMatrix()
-{
-    return mLocalMatrix;
-}
-
-vec3 Servo::getPos()
-{
-    return vec3(mLocalMatrix[3][0], mLocalMatrix[3][1], mLocalMatrix[3][2]);
-}
-
-void Servo::setPos(vec3 pos)
-{
-    setBase(pos, mRotation);
-}
-
 void Servo::updateMatrix()
 {
-    //Resets the local matrix back to the initial transformation
+    //Reset the mLocalMatrix back to the base matrix
     mLocalMatrix = mBaseMatrix;
 
-    //Calculate the new rotation;
+    //Rotate based on the servo's angle while excluding the base Y rotation so that the servo rotates to the correct angle
     mLocalMatrix *= rotate(mServoAngle, AXIS);
 
-    //Add the parent's transformation
-    //This is so that any rotation or translation of the parent will be passed to this object
     if (mParent)
-        mLocalMatrix = mParent->mLocalMatrix * mLocalMatrix;
+        mWorldMatrix = mParent->mWorldMatrix * mLocalMatrix;
+    else
+        mWorldMatrix = mLocalMatrix;
 
-    //Update child after all the calculations have been made
-    if (mChild)
-        mChild->updateMatrix();
-
-    //Update foot matrix if servo is attached to foot
-    if (mFoot)
-        mFoot->updateMatrix();
+    if (mChildren.size())
+    {
+        for (Node3D *child : mChildren)
+            child->updateMatrix();
+    }
 }
 
 void Servo::draw()
 {
-    gl::ScopedModelMatrix matrix(mLocalMatrix);
+    gl::ScopedModelMatrix matrix(mWorldMatrix);
     {
         gl::ScopedColor color(mColor);
         mAxisMesh->draw();
-    }
-
-    {
-        gl::ScopedDepth depth(false);
-        gl::drawCoordinateFrame();
     }
 }
