@@ -16,7 +16,7 @@ public:
     void setFeetBasePos(std::vector<vec3> feetBasePos);    
     void setBodyBasePos(vec3 bodyBasePos);
     void startGait(GAITTYPE gaitType = GAITTYPE::TRIPOD);        
-    void runGait(vec3* currFeetPos);
+    void runGait(vec3* currFeetPos, vec3 dir);
     void stopGait();    
     bool isWalking();
 
@@ -36,7 +36,6 @@ private:
     float mHalfStepDist = 1;
 
     int mStepDuration;
-    int mPauseTime;
 
     Gait mCurrGait;
     GAITTYPE mCurrGaitType;
@@ -46,7 +45,7 @@ private:
     void initGaits();     
     void setFeetStartPos(vec3* currFootPos, std::vector<LEG> exclude = {});
     void moveFoot(float timeLapsedRatio, float stepDist, vec3 startFootPos, vec3* currFootPos);
-    void moveBody(vec3*currFeetPos);
+    void moveBody(vec3*currFeetPos, std::vector<LEG> exclude = {});
 
     int mCurrGroupIdx = 0;
 };

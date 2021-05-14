@@ -6,9 +6,9 @@ GaitGroup::GaitGroup(std::vector<LEG> legIndices, int pauseDuration)
     mPauseDuration = pauseDuration;
 }
 
-void GaitGroup::setStartTime(int startTime, int stepDuration, int timeOffset, int idx)
+void GaitGroup::setStartTime(int startTime, int stepDuration, int timeOffset)
 {
-    mStartTime = startTime + timeOffset * (idx + 1) + (stepDuration) * idx;
+    mStartTime = startTime + timeOffset + stepDuration;
 }
 
 int GaitGroup::getStartTime()
@@ -35,8 +35,17 @@ void Gait::setGroups(std::vector<GaitGroup> groups)
 
 void Gait::initStartTime(int startTime, int stepDuration)
 {
-    for (int i = 0; i < mGaitGroups.size(); i++)    
-        mGaitGroups[i].setStartTime(startTime + mTimeOffset * i, stepDuration, 0, i);    
+    for (int i = 0; i < mGaitGroups.size(); i++)
+    {
+        if (i > 0)
+        {
+            GaitGroup prevGroup = mGaitGroups[i - 1];
+            int pauseDur = prevGroup.getPauseDuration();
+            mGaitGroups[i].setStartTime(prevGroup.getStartTime() + pauseDur, stepDuration, mTimeOffset);
+        }
+        else
+            mGaitGroups[i].setStartTime(startTime);
+    }
 }
 
 void Gait::setTimeOffset(int timeOffset)
