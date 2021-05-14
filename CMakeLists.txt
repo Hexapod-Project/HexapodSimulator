@@ -15,6 +15,10 @@ set(APP_SOURCE_FILES
     ${PROJECT_SOURCE_DIR}/src/classes/Foot.cpp
     ${PROJECT_SOURCE_DIR}/src/classes/Hexapod.cpp
     ${PROJECT_SOURCE_DIR}/src/classes/Body.cpp
+    ${PROJECT_SOURCE_DIR}/src/classes/Animation.cpp
+    ${PROJECT_SOURCE_DIR}/src/classes/Animator.cpp
+    ${PROJECT_SOURCE_DIR}/src/classes/Gait.cpp
+    ${PROJECT_SOURCE_DIR}/src/classes/GaitManager.cpp
 
     ${PROJECT_SOURCE_DIR}/src/scenes/Scene2DLegIK.cpp
     ${PROJECT_SOURCE_DIR}/src/scenes/Scene3DLegIK.cpp
@@ -26,7 +30,7 @@ set(APP_SOURCE_FILES
 )
 
 set(APP_INCLUDES
-    ${PROJECT_SOURCE_DIR}/include 
+    ${PROJECT_SOURCE_DIR}/include
     ${PROJECT_SOURCE_DIR}/include/classes
     ${PROJECT_SOURCE_DIR}/include/scenes
     ${PROJECT_SOURCE_DIR}/include/tools

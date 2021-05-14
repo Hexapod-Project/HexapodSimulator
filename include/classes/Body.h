@@ -18,6 +18,10 @@ public:
     float mYaw = 0;
     float mPitch = 0;
 
+    float mPosX = 0;
+    float mPosY = 0.5;
+    float mPosZ = 0;
+
 private:
     mat4 mBodyMatrix;
     gl::BatchRef mBodyMesh;

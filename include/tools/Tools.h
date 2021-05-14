@@ -2,6 +2,7 @@
 
 #include "cinder/app/App.h"
 #include "cinder/gl/gl.h"
+#include <chrono>
 
 using namespace ci;
 
@@ -12,3 +13,5 @@ mat4 eulerRotate(mat4 target, vec3 rotations);
 vec3 getPosFromMatrix(mat4 matrix);
 vec3 getRotFromMatrix(mat4 matrix);
 bool compareFloats(double a, double b, double precision = 0.00001);
+int getCurrTime();
+vec2 getCentroid(std::vector<vec2> polygon);

@@ -46,3 +46,18 @@ bool compareFloats(double a, double b, double precision)
 {
     return abs(a - b) <= precision;
 }
+
+int getCurrTime()
+{
+    return std::chrono::duration_cast<std::chrono::milliseconds>(std::chrono::system_clock::now().time_since_epoch()).count();
+}
+
+vec2 getCentroid(std::vector<vec2> polygon)
+{
+    vec2 sum = vec2(0);
+
+    for(int i = 0; i < polygon.size(); i++)
+        sum += polygon[i];    
+
+    return sum/(float)polygon.size();
+}

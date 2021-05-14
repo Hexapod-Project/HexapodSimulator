@@ -21,5 +21,5 @@ void Foot::draw()
 {
     gl::ScopedModelMatrix matrix(mWorldMatrix);
     gl::ScopedColor color(mColor);
-    mMesh->draw();    
+    mMesh->draw();
 }

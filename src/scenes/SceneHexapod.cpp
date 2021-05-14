@@ -3,11 +3,12 @@
 
 void SceneHexapod::setup()
 {
-    mCam.lookAt(vec3(0, 10, 12), vec3(0));
+    mCam.lookAt(vec3(0, 15, 20), vec3(0));
     mCam.setPerspective(40.0, getWindowAspectRatio(), 0.01, 100.0);
     mCamUi = CameraUi(&mCam, getWindow());
 
     mWirePlane = gl::Batch::create(geom::WirePlane().size(vec2(1000)).subdivisions(vec2(1000)), gl::getStockShader(gl::ShaderDef().color()));
+    mFloor = gl::Batch::create(geom::Plane().size(vec2(1000)).subdivisions(vec2(1000)), gl::getStockShader(gl::ShaderDef().color()));
 
     mWorldAxisMatrix = mat4(1.0f);
     mWorldAxisViewportSize = vec2(getWindowWidth() / 5, getWindowHeight() / 5);
@@ -39,6 +40,10 @@ void SceneHexapod::draw()
 
         mWirePlane->draw();
         mHexapod.draw();
+
+        gl::ScopedColor color(44/255.0, 56/255.0, 102/255.0);
+        gl::ScopedModelMatrix matrix(translate(vec3(0, -0.1, 0)));
+        mFloor->draw();
 
         if(mIsDrawCoord)
             mHexapod.drawCoord();

@@ -2,7 +2,8 @@
 #include "Tools.h"
 
 vec3 DEFAULT_LEG_DIR = vec3(1, 0, 0);
-Leg3D::Leg3D() {
+Leg3D::Leg3D()
+{
     //Disable showing the coordinate frame
     mDisableShowCoord = true;
 }
@@ -183,21 +184,28 @@ void Leg3D::calculateIK()
 }
 
 void Leg3D::update()
-{        
+{
     updateMatrix();
     mHipServo.updateMatrix();
-    mFemurServo.updateMatrix(); 
+    mFemurServo.updateMatrix();
 
     //Somehow running this here has the least jittering from the slow update
     //Probably need a faster algorithm for calculating the IK
     calculateIK();
 
-    mTibiaServo.updateMatrix();        
-    mFoot.updateMatrix();    
+    mTibiaServo.updateMatrix();
+    mFoot.updateMatrix();
 }
 
 void Leg3D::draw()
 {
+    {
+        gl::ScopedColor color(Color::black());
+        gl::drawLine(mHipServo.getWorldPos(), mFemurServo.getWorldPos());
+        gl::drawLine(mFemurServo.getWorldPos(), mTibiaServo.getWorldPos());
+        gl::drawLine(mTibiaServo.getWorldPos(), mFoot.getWorldPos());
+    }
+
     //Draw the leg components
     {
         gl::ScopedModelMatrix matrix(mWorldMatrix);

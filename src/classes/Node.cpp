@@ -107,7 +107,7 @@ void Node::drawTexts()
 void Node::draw()
 {
     gl::ScopedColor color(mColor);
-    gl::drawStrokedCircle(mPos, Node::sNodeRadius);    
+    gl::drawStrokedCircle(mPos, Node::sNodeRadius);      
     
     drawTexts();    
 }

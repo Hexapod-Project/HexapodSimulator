@@ -7,7 +7,7 @@ const int START_SCENE_IDX = 2;
 
 void prepareSettings(App::Settings *settings)
 {
-    settings->setWindowSize(1024, 768);
+    settings->setWindowSize(1280, 720);
 }
 
 void HexapodSimulator::setup()

@@ -22,6 +22,7 @@ private:
 
     gl::TextureRef mTextTexture;
     gl::BatchRef mWirePlane;
+    gl::BatchRef mFloor;
 
     Hexapod mHexapod;
 
