@@ -12,7 +12,7 @@ void SceneHexapod::setup()
 
     mWorldAxisMatrix = mat4(1.0f);
     mWorldAxisViewportSize = vec2(getWindowWidth() / 5, getWindowHeight() / 5);
-    mWorldAxisViewportPos = vec2(getWindowWidth() - mWorldAxisViewportSize.x, 0);
+    mWorldAxisViewportPos = vec2(getWindowWidth() - mWorldAxisViewportSize.x, 0);    
 
     mHexapod.setup();
 
@@ -29,7 +29,8 @@ void SceneHexapod::update()
 void SceneHexapod::draw()
 {
     gl::clear(Color(Color::gray(0.3f)));
-    {        
+    
+    {
         gl::ScopedViewport viewport(0, 0, getWindowWidth(), getWindowHeight());
 
         gl::draw(mTextTexture);
@@ -38,14 +39,21 @@ void SceneHexapod::draw()
 
         gl::ScopedDepth depth(true);
 
-        mWirePlane->draw();
+        {
+            gl::ScopedColor color(Color::gray(0.5));
+            mWirePlane->draw();
+        }
+
         mHexapod.draw();
 
-        gl::ScopedColor color(44/255.0, 56/255.0, 102/255.0);
-        gl::ScopedModelMatrix matrix(translate(vec3(0, -0.1, 0)));
-        mFloor->draw();
+        {
 
-        if(mIsDrawCoord)
+            gl::ScopedColor color(44 / 255.0, 56 / 255.0, 102 / 255.0);
+            gl::ScopedModelMatrix matrix(translate(vec3(0, -0.1, 0)));
+            mFloor->draw();
+        }
+
+        if (mIsDrawCoord)
             mHexapod.drawCoord();
     }
 

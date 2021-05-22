@@ -12,23 +12,31 @@ class GaitManager
 {
 public:
     GaitManager();
-    void setWalkProperties(float walkSpeed, float stepHeight, float stepDist);        
-    void setFeetBasePos(std::vector<vec3> feetBasePos);    
+    void setWalkProperties(float walkSpeed, float stepHeight, float stepDist);
+    void setFeetBasePos(std::vector<vec3> feetBasePos);
     void setBodyBasePos(vec3 bodyBasePos);
-    void startGait(GAITTYPE gaitType = GAITTYPE::TRIPOD);        
-    void runGait(vec3* currFeetPos, vec3 dir);
-    void stopGait();    
+    void startGait(MOVETYPE moveType, GAITTYPE gaitType = GAITTYPE::TRIPOD);
+    void runGait(vec3 *currFeetPos, vec3 dir = vec3(0));
+    void stopGait();
+    void setWalkDir(float walkDir);
+    void setRotateDir(ROTATEDIR rotateDir);
+    ROTATEDIR getRotateDir();
     bool isWalking();
+    bool isRotating();
+    bool isStopping();
+    bool isMoving();
 
-private:    
+private:
     vec3 mBaseBodyPos;
     std::vector<vec3> mFeetBasePos;
+    std::vector<float> mFeetBaseRot;
     std::vector<vec3> mFeetStartPos;
-    std::vector<float> mFeetStepDists;
+    std::vector<float> mFeetHalfStepDists;        
+    std::vector<float> mFeetRadius;
+    std::vector<float> mFeetPrevAngles;
+    std::vector<float> mFeetCurrAngles;
 
-    bool mIsWalking = false;
-
-    const int BASE_STEP_DURATION = 1000; //Each step takes 1000ms to complete
+    const int BASE_STEP_DURATION = 800; //Each step takes 800ms to complete
 
     float mWalkSpeed = 1.0;
     float mStepHeight = 1.0;
@@ -38,14 +46,28 @@ private:
     int mStepDuration;
 
     Gait mCurrGait;
-    GAITTYPE mCurrGaitType;
+    int mCurrGaitGroupSize;
 
-    std::vector<Gait> mGaits;  
+    MOVETYPE mMoveType = MOVETYPE::IDLE;    
+    ROTATEDIR mRotateDir = ROTATEDIR::COUNTERCLOCKWISE;
 
-    void initGaits();     
-    void setFeetStartPos(vec3* currFootPos, std::vector<LEG> exclude = {});
-    void moveFoot(float timeLapsedRatio, float stepDist, vec3 startFootPos, vec3* currFootPos);
-    void moveBody(vec3*currFeetPos, std::vector<LEG> exclude = {});
+    float mWalkDir = M_PI/2;
+    float mMoveDir = M_PI / 2;
+
+    bool _isStopping = false;
+
+    std::vector<int> mStoppedGroups;
+
+    std::vector<Gait> mGaits;
+
+    void initGaits();
+    void restartGait();
+    void setFeetBaseRot();
+    void setFeetRadius();
+    void updateForNextCycle(vec3 *currFootPos, std::vector<LEG> exclude = {});
+    void moveFoot(float timeLapsedRatio, int footIdx, vec3 *currFootPos);
+    void moveBody(vec3 *currFeetPos, std::vector<LEG> exclude = {});
+    void rotateBody(vec3 *currFeetPos, std::vector<LEG> rotatingFeet = {});
 
     int mCurrGroupIdx = 0;
 };

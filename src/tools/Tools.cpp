@@ -44,7 +44,7 @@ vec3 getRotFromMatrix(mat4 matrix)
 
 bool compareFloats(double a, double b, double precision)
 {
-    return abs(a - b) <= precision;
+    return std::abs(a - b) <= precision;
 }
 
 int getCurrTime()
@@ -60,4 +60,23 @@ vec2 getCentroid(std::vector<vec2> polygon)
         sum += polygon[i];    
 
     return sum/(float)polygon.size();
+}
+
+double toPositiveAngle(double angle)
+{
+    if(angle < 0)
+        angle = M_PI * 2 + angle;
+
+    return angle;
+}
+
+//Returns the either the positive or negative angle that has the smallest value
+double getSmallestAngle(double angle)
+{
+    if(angle > M_PI)
+        angle = angle - M_PI * 2;
+    else if (angle < -M_PI)
+        angle = angle + M_PI * 2;
+
+    return angle;
 }

@@ -1,14 +1,14 @@
 #pragma once
 
+//This follows the CW order
 enum LEG
-{
-    FRONTLEFT,
+{    
     FRONTRIGHT,
-    MIDLEFT,
     MIDRIGHT,
-    BACKLEFT,
-    BACKRIGHT,
-    NONE
+    BACKRIGHT, 
+    BACKLEFT,    
+    MIDLEFT,
+    FRONTLEFT    
 };
 
 enum TWEENTYPE {
@@ -24,4 +24,16 @@ enum GAITTYPE
     TRIPOD,
     RIPPLE, //FR, MR, BR, BL, ML, FL
     TRIPLE, //Tripod + Ripple
+    WAVE
+};
+
+enum MOVETYPE {
+    WALK,
+    ROTATE,      
+    IDLE
+};
+
+enum ROTATEDIR {
+    CLOCKWISE,
+    COUNTERCLOCKWISE
 };

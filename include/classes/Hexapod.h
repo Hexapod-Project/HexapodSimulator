@@ -16,10 +16,7 @@ class Hexapod
 {
 public:
     void drawGUI();
-    void setup();
-    void createWalkAnimations();
-    void resetFeetPos();
-    void resetBodyPos();
+    void setup();    
     void update();
     void draw();
     void drawCoord();
@@ -46,5 +43,9 @@ private:
 
     int mComboGaitType = GAITTYPE::TRIPOD;
     GAITTYPE mCurrGaitType = GAITTYPE::TRIPOD;
-    GaitManager mGaitManager;
+    GaitManager mGaitManager;    
+
+    void createWalkAnimations();
+    void resetFeetPos();
+    void resetBodyPos();
 };

@@ -27,6 +27,17 @@ float Z_FB_LEG_OFFSET = BODY_LENGTH / 2;
 float FOOT_DIST = BODY_WIDTH + 3;
 float FOOT_Y = 0;
 
+const float LEFT_FORWARD = 3 * M_PI / 4;
+const float FORWARD = M_PI / 2;
+const float RIGHT_FORWARD = M_PI / 4;
+const float RIGHT = 0;
+const float LEFT = M_PI;
+const float LEFT_BACKWARD = 5 * M_PI / 4;
+const float BACKWARD = 3 * M_PI / 2;
+const float RIGHT_BACKWARD = 7 * M_PI / 4;
+
+const vec2 BTN_SIZE = vec2(100, 25);
+
 void Hexapod::setup()
 {
     //Leg offsets from the body's origin
@@ -41,6 +52,7 @@ void Hexapod::setup()
     mBody = Body(BODY_THICKNESS, BODY_WIDTH, BODY_LENGTH);
     mBody.setBase(vec3(0), vec3(0));
 
+    mLegs.clear();
     //Create the 6 legs
     for (int i = 0; i < LEG_COUNT; i++)
     {
@@ -178,26 +190,90 @@ void Hexapod::drawGUI()
     if (ImGui::Button("Reset Feet"))
         resetFeetPos();
 
+    //Walk/Rotate cycle
     ImGui::Separator();
-    ImGui::Text("Walk Cycle");
+    ImGui::Text("Walk/Rotate Cycle");
 
-    ImGui::Columns(2);
-    ImGui::Combo("Gait Type", &mComboGaitType, std::vector<std::string>{"Tripod", "Ripple", "Triple"});
+    ImGui::Columns(3);
+    ImGui::Combo("Gait", &mComboGaitType, std::vector<std::string>{"Tripod", "Ripple", "Triple", "Wave"});
 
-    ImGui::NextColumn();
-    if (ImGui::Button(mGaitManager.isWalking() ? "Stop" : "Play"))
+    ImGui::NextColumn();    
+    const char* walkBtnStr = mGaitManager.isStopping() ? "Stopping" : mGaitManager.isWalking() ? "Stop" :  "Walk";
+    if (ImGui::Button(walkBtnStr, BTN_SIZE))
     {
-        if (mGaitManager.isWalking())
-        {
-            mGaitManager.stopGait();
-            resetFeetPos();
-        }
-        else
+        if (mGaitManager.isWalking())        
+            mGaitManager.stopGait();                    
+        else if (!mGaitManager.isStopping())
         {
             mCurrGaitType = (GAITTYPE)mComboGaitType;
-            mGaitManager.startGait(mCurrGaitType);
+            mGaitManager.startGait(MOVETYPE::WALK, mCurrGaitType);
         }
     }
+
+    ImGui::NextColumn();
+    const char* rotateBtnStr = mGaitManager.isStopping() ? "Stopping" : mGaitManager.isRotating() ? "Stop" : "Rotate";
+    if (ImGui::Button(rotateBtnStr, BTN_SIZE))
+    {
+        if (mGaitManager.isRotating())        
+            mGaitManager.stopGait();         
+        else if (!mGaitManager.isStopping())
+        {
+            mCurrGaitType = (GAITTYPE)mComboGaitType;
+            mGaitManager.startGait(MOVETYPE::ROTATE, mCurrGaitType);
+        }
+    }
+
+    //Walk Directions buttons
+    ImGui::Columns(1);
+    ImGui::Text("Walk Directions");
+    ImGui::Columns(3);
+    if (ImGui::Button("Left Forward", BTN_SIZE))
+        mGaitManager.setWalkDir(LEFT_FORWARD);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("Forward", BTN_SIZE))
+        mGaitManager.setWalkDir(FORWARD);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("Right Forward", BTN_SIZE))
+        mGaitManager.setWalkDir(RIGHT_FORWARD);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("Left", BTN_SIZE))
+        mGaitManager.setWalkDir(LEFT);
+
+    ImGui::NextColumn();
+    ImGui::NextColumn();
+
+    if (ImGui::Button("Right", BTN_SIZE))
+        mGaitManager.setWalkDir(RIGHT);
+
+    ImGui::NextColumn();
+
+    if (ImGui::Button("Left Backward", BTN_SIZE))
+        mGaitManager.setWalkDir(LEFT_BACKWARD);
+
+    ImGui::NextColumn();
+
+    if (ImGui::Button("Backward", BTN_SIZE))
+        mGaitManager.setWalkDir(BACKWARD);
+
+    ImGui::NextColumn();
+
+    if (ImGui::Button("Right Backward", BTN_SIZE))
+        mGaitManager.setWalkDir(RIGHT_BACKWARD);
+
+    //Rotate Directions buttons
+    ImGui::Columns(1);
+    ImGui::Text("Rotate Directions");
+
+    if (ImGui::Button(mGaitManager.getRotateDir() == ROTATEDIR::CLOCKWISE ? "CW" : "CCW", BTN_SIZE))
+    {
+        if(mGaitManager.getRotateDir() == ROTATEDIR::CLOCKWISE)
+            mGaitManager.setRotateDir(ROTATEDIR::COUNTERCLOCKWISE);
+        else
+            mGaitManager.setRotateDir(ROTATEDIR::CLOCKWISE);
+    }        
 
     ImGui::End();
 }
@@ -221,17 +297,15 @@ void Hexapod::resetBodyPos()
 
 void Hexapod::update()
 {
-    bool isWalking = mGaitManager.isWalking();
-    if (mGaitManager.isWalking())
+    bool isMoving = mGaitManager.isMoving();
+    if (isMoving)
     {
         mGaitManager.runGait(mFootTargetPos);
-        
+
         if (mCurrGaitType != mComboGaitType)
-        {         
-            mGaitManager.stopGait();
-            resetFeetPos();
-            return;
-        }        
+        {
+            //TODO: Smooth transition 
+        }
     }
 
     mBody.update();
@@ -240,18 +314,16 @@ void Hexapod::update()
     {
         Leg3D *leg = mLegs[i];
 
-        if (isWalking)
-        {
-            vec3 footTargetPos = mFootTargetPos[i];
-            mFootPosX[i] = footTargetPos.x;
-            mFootPosY[i] = footTargetPos.y;
-            mFootPosZ[i] = footTargetPos.z;
+        if (isMoving)
+        {            
+            mFootPosX[i] = mFootTargetPos[i].x;
+            mFootPosY[i] = mFootTargetPos[i].y;
+            mFootPosZ[i] = mFootTargetPos[i].z;
         }
         else
-            mFootTargetPos[i] = vec3(mFootPosX[i], mFootPosY[i], mFootPosZ[i]);
-
-        vec3 footTargetPos = mFootTargetPos[i];
-        leg->setFootTargetPos(footTargetPos);
+            mFootTargetPos[i] = vec3(mFootPosX[i], mFootPosY[i], mFootPosZ[i]);        
+        
+        leg->setFootTargetPos(mFootTargetPos[i]);
         leg->update();
     }
 

@@ -15,3 +15,5 @@ vec3 getRotFromMatrix(mat4 matrix);
 bool compareFloats(double a, double b, double precision = 0.00001);
 int getCurrTime();
 vec2 getCentroid(std::vector<vec2> polygon);
+double toPositiveAngle(double angle);
+double getSmallestAngle(double angle);
