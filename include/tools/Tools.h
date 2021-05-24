@@ -17,3 +17,5 @@ int getCurrTime();
 vec2 getCentroid(std::vector<vec2> polygon);
 double toPositiveAngle(double angle);
 double getSmallestAngle(double angle);
+double clampAngleTo360(double angle);
+double getTimeLapsedRatio(int startTime, int duration);

@@ -4,70 +4,56 @@
 #include "Tools.h"
 #include "Enums.h"
 #include "Gait.h"
+#include "Hexapod.h"
 
 using namespace ci;
 using namespace std::chrono;
 
+class Hexapod;
+
 class GaitManager
 {
 public:
-    GaitManager();
-    void setWalkProperties(float walkSpeed, float stepHeight, float stepDist);
-    void setFeetBasePos(std::vector<vec3> feetBasePos);
-    void setBodyBasePos(vec3 bodyBasePos);
+    GaitManager(Hexapod *target);
+    void initGaits();
     void startGait(MOVETYPE moveType, GAITTYPE gaitType = GAITTYPE::TRIPOD);
-    void runGait(vec3 *currFeetPos, vec3 dir = vec3(0));
+    void runGait(vec3 dir = vec3(0));
     void stopGait();
+    GAITTYPE getGaitType();
+    void setGaitType(GAITTYPE gaitType, GAITGROUPSTATE groupState = GAITGROUPSTATE::MOVING); 
     void setWalkDir(float walkDir);
     void setRotateDir(ROTATEDIR rotateDir);
-    ROTATEDIR getRotateDir();
+    ROTATEDIR getRotateDir();    
+    MOVETYPE getMoveType();
     bool isWalking();
     bool isRotating();
-    bool isStopping();
     bool isMoving();
+    bool isStopping();
 
-private:
-    vec3 mBaseBodyPos;
-    std::vector<vec3> mFeetBasePos;
-    std::vector<float> mFeetBaseRot;
-    std::vector<vec3> mFeetStartPos;
-    std::vector<float> mFeetHalfStepDists;        
-    std::vector<float> mFeetRadius;
-    std::vector<float> mFeetPrevAngles;
-    std::vector<float> mFeetCurrAngles;
+private:    
+    Hexapod *mTarget;
 
-    const int BASE_STEP_DURATION = 800; //Each step takes 800ms to complete
-
-    float mWalkSpeed = 1.0;
-    float mStepHeight = 1.0;
-    float mStepDist = 2.0;
-    float mHalfStepDist = 1;
-
-    int mStepDuration;
-
+    GAITTYPE mCurrGaitType;
     Gait mCurrGait;
-    int mCurrGaitGroupSize;
+    int mCurrGaitGroupSize;    
 
-    MOVETYPE mMoveType = MOVETYPE::IDLE;    
+    MOVETYPE mMoveType = MOVETYPE::IDLE;
     ROTATEDIR mRotateDir = ROTATEDIR::COUNTERCLOCKWISE;
 
-    float mWalkDir = M_PI/2;
-    float mMoveDir = M_PI / 2;
-
+    float mWalkDir = M_PI / 2;    
+    
     bool _isStopping = false;
 
-    std::vector<int> mStoppedGroups;
+    int mStoppedGroupCount = 0;
+    std::vector<GAITGROUPSTATE> mGroupState;
+    std::vector<float> mGroupMoveDir;
 
     std::vector<Gait> mGaits;
 
-    void initGaits();
     void restartGait();
     void setFeetBaseRot();
-    void setFeetRadius();
-    void updateForNextCycle(vec3 *currFootPos, std::vector<LEG> exclude = {});
-    void moveFoot(float timeLapsedRatio, int footIdx, vec3 *currFootPos);
-    void moveBody(vec3 *currFeetPos, std::vector<LEG> exclude = {});
-    void rotateBody(vec3 *currFeetPos, std::vector<LEG> rotatingFeet = {});
+    void setFeetRadius();   
+    void changeAllGroupState(GAITGROUPSTATE groupState); 
 
     int mCurrGroupIdx = 0;
 };

@@ -18,9 +18,9 @@ public:
     float mYaw = 0;
     float mPitch = 0;
 
-    float mPosX = 0;
-    float mPosY = 0.5;
-    float mPosZ = 0;
+    float mLocalPosX = 0;
+    float mLocalPosY = 0.5;
+    float mLocalPosZ = 0;
 
 private:
     mat4 mBodyMatrix;

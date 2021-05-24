@@ -80,3 +80,13 @@ double getSmallestAngle(double angle)
 
     return angle;
 }
+
+double clampAngleTo360(double angle)
+{
+    return fmod(angle, M_PI * 2);
+}
+
+double getTimeLapsedRatio(int startTime, int duration)
+{
+    return (double)(getCurrTime() - startTime) / duration;
+}

@@ -46,7 +46,7 @@ Body::Body(float thickness, float width, float length)
 void Body::updateMatrix()
 {
     mLocalRot = vec3(toRadians(mPitch), toRadians(mYaw), toRadians(mRoll));
-    mLocalPos = vec3(mPosX, mPosY, mPosZ);
+    mLocalPos = vec3(mLocalPosX, mLocalPosY, mLocalPosZ);
 
     Node3D::updateMatrix();
 }
