@@ -199,6 +199,7 @@ void Hexapod::drawGUI()
     ImGui::Columns(1);
     ImGui::Text("Walk Directions");
 
+    //TODO: Walk facing the walk direction
     ImGui::Checkbox("Crab Mode", &mCrabMode);
 
     ImGui::Columns(3);
@@ -274,20 +275,25 @@ void Hexapod::update()
 {
     bool isMoving = mGaitManager->isMoving();
 
+    //Manage the feet positions if the hexapod is currently moving
     if (isMoving)
         mGaitManager->runGait();
 
+    //Take a step towards the new feet positions
     stepTowardsTarget();
     setFeetToCurrPos();
 
+    //Center/Orient the body
     if (mGaitManager->isWalking())
         centerBody();
     else if (mGaitManager->isRotating())
         orientToFront();
 
+    //Update the legs transformation visually
     for (Leg3D *leg : mLegs)
         leg->update();
 
+    //Update the body transformations visually
     mBody.update();
 
     drawGUI();
@@ -330,40 +336,51 @@ void Hexapod::stepTowardsTarget()
     for (int footIdx = 0; footIdx < mLegs.size(); footIdx++)
     {
         float timeLapsedRatio = getTimeLapsedRatio(mStepStartTimes[footIdx], mStepDuration);
+        
         vec3 newPos = vec3(mFeetCurrPosX[footIdx], mFeetCurrPosY[footIdx], mFeetCurrPosZ[footIdx]);
+
         vec3 stepStartPos = mFeetStepStartPos[footIdx];
+
+        //Calculate the step height based on the time lapsed
         float y = sin(timeLapsedRatio * M_PI) * mStepHeight - stepStartPos.y * timeLapsedRatio;
 
         if (timeLapsedRatio >= 0 && timeLapsedRatio <= 1)
         {
             if (moveType == MOVETYPE::WALK)
             {
+                //Calculate the new position based on the time lapsed and the offset
                 vec3 offset = mFeetOffsetPos[footIdx] * timeLapsedRatio;
-                offset.y = y;
-
+                offset.y = y;                
                 newPos = stepStartPos + offset;
             }
             else if (moveType == MOVETYPE::ROTATE)
             {
+                //Calculate the new angle of the foot based on the current time lapsed and offset angle
                 float startAngle = mFeetStepStartRot[footIdx];
                 float offsetAngle = mFeetOffsetRot[footIdx] * timeLapsedRatio;
                 float newAngle = toPositiveAngle(startAngle + offsetAngle);
 
+                //Set the new position based on the new angle
                 float footRadius = mFeetRadius[footIdx];
                 newPos = vec3(cos(newAngle) * footRadius, y, sin(newAngle) * footRadius);
 
+                //Calculate the changed in angle compared to the frame before this
                 float currAngle = toPositiveAngle(atan2(mFeetCurrPosZ[footIdx], mFeetCurrPosX[footIdx]));
                 float deltaAngle = getSmallestAngle(newAngle - currAngle);
 
+                //Add the delta angle to the global variable to be used to orient the body
                 mDeltaAngle += deltaAngle;
+                //Add the rotated foot indices to be skipped from orienting the body
                 mRotatedLegs.push_back(footIdx);
             }
         }
 
+        //Update the feet current position to the new position
         mFeetCurrPosX[footIdx] = newPos.x;
         mFeetCurrPosY[footIdx] = newPos.y;
         mFeetCurrPosZ[footIdx] = newPos.z;
 
+        //Update the feet current radius(distance from the body's origin)
         vec2 footRadiusDiff = vec2(newPos.x - mBody.mLocalPosX, newPos.z - mBody.mLocalPosZ);
         mFeetRadius[footIdx] = sqrt(dot(footRadiusDiff, footRadiusDiff));
     }
@@ -389,33 +406,41 @@ void Hexapod::updateNextStep(int footIdx, double dir, bool isStop)
 
         if (!isStop)
         {
-            float dist = sqrt(dot(diff, diff));
+            //Get the difference of the foot's distance from the initial position
+            float diffDist = sqrt(dot(diff, diff));
+            //Calculate the step distance to be taken
+            float stepDist = mHalfStepDist + diffDist;
 
-            float stepDist = mHalfStepDist + dist;
-
+            //Calculate the position offset for the next step
             mFeetOffsetPos[footIdx] = vec3(cos(dir) * stepDist, 0, sin(dir) * stepDist);
         }
         else
+            //Set the foot position offset so that it moves back to the initial position
             mFeetOffsetPos[footIdx] = vec3(-diff.x, 0, -diff.y);
     }
     else if (moveType == MOVETYPE::ROTATE)
     {
+        //Calculate the difference of the current foot angle to the initial foot angle
         float currAngle = atan2(currFootPos.z - mBody.mLocalPosZ, currFootPos.x - mBody.mLocalPosX);
-        float deltaAngle = getSmallestAngle(currAngle - mFeetStartRot[footIdx]);
+        float diffAngle = getSmallestAngle(currAngle - mFeetStartRot[footIdx]);
 
         if (!isStop)
-            mFeetOffsetRot[footIdx] = mHalfStepAngle * dir - deltaAngle;
+            //Set the foot rotation offset
+            mFeetOffsetRot[footIdx] = mHalfStepAngle * dir - diffAngle;
         else
-            mFeetOffsetRot[footIdx] = -deltaAngle;
+            //Set the foot rotation offset so that it moves back to the initial rotation
+            mFeetOffsetRot[footIdx] = -diffAngle;
 
         mFeetStepStartRot[footIdx] = currAngle;
     }
-    
+
+    //Set the next step start position to the current foot position
     mFeetStepStartPos[footIdx] = currFootPos;
 }
 
 void Hexapod::setFeetToCurrPos()
 {
+    //Set the feet to the current positions
     for (int i = 0; i < mLegs.size(); i++)
     {
         Leg3D *leg = mLegs[i];
@@ -433,6 +458,7 @@ void Hexapod::centerBody()
     //Get the center of mass
     vec2 centroid = getCentroid(currFeetPolygon);
 
+    //Change the feet position so that the body is centered
     for (int legIdx = 0; legIdx < LEG_COUNT; legIdx++)
     {
         mFeetCurrPosX[legIdx] -= centroid.x - mBody.mBasePos.x;
@@ -445,16 +471,20 @@ void Hexapod::orientToFront()
     if (mRotatedLegs.size() <= 0)
         return;
 
+    //Divider to divide the delta angle among the non-rotating/pushing feet
+    int divider = LEG_COUNT / mRotatedLegs.size() - 1;
+
     for (int footIdx = 0; footIdx < LEG_COUNT; footIdx++)
     {
+        //Skip the feet that are currently taking a step
         if (std::count(mRotatedLegs.begin(), mRotatedLegs.end(), footIdx))
             continue;
 
-        int divider = LEG_COUNT / mRotatedLegs.size() - 1;
-
+        //Calculate the new angle by adding the current angle with the delta angle of the current frame and the previous frame
         float currAngle = atan2(mFeetCurrPosZ[footIdx], mFeetCurrPosX[footIdx]);
         float newAngle = currAngle - mDeltaAngle / divider;
 
+        //Set the new foot position
         float footRadius = mFeetRadius[footIdx];
         vec3 newPos = vec3(cos(newAngle) * footRadius, mFeetCurrPosY[footIdx], sin(newAngle) * footRadius);
 

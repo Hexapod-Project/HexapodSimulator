@@ -57,21 +57,20 @@ void GaitManager::startGait(MOVETYPE moveType, GAITTYPE gaitType)
 
     for (int grpIdx = 0; grpIdx < mCurrGait.getGroupSize(); grpIdx++)
     {
+        //Set the walk/rotate directions
         if (mMoveType == MOVETYPE::WALK)
             mGroupMoveDir[grpIdx] = mWalkDir;
         else if (mMoveType == MOVETYPE::ROTATE)
             mGroupMoveDir[grpIdx] = mRotateDir;
 
+        //Initialize the steps
         GaitGroup *currGroup = mCurrGait.getGroup(grpIdx);
         std::vector<LEG> legIndices = currGroup->getLegIndices();
-
         for (int footIdx = 0; footIdx < legIndices.size(); footIdx++)
             mTarget->setNextStep(legIndices[footIdx], mGroupMoveDir[grpIdx], currGroup->getStartTime());
     }
 }
 
-//TODO: Add directional vector to change movement direction
-//(eg. (+x) = turn right, -x = turn left, +z = forward, -z = backward, (+x, +z) = forward right, etc.)
 void GaitManager::runGait(vec3 dir)
 {
     int currTime = getCurrTime();
@@ -89,6 +88,7 @@ void GaitManager::runGait(vec3 dir)
 
         if (timeLapsedRatio < 0)
         {
+            //Updates the feet positions and states while it is not taking a step
             for (int i = 0; i < currFeet.size(); i++)
                 mTarget->updateNextStep(currFeet[i], mGroupMoveDir[grpIdx], currGroupState != GAITGROUPSTATE::MOVING);
         }
@@ -96,17 +96,21 @@ void GaitManager::runGait(vec3 dir)
         {
             if (currGroupState == GAITGROUPSTATE::MOVING)
             {
+                //Set the next step start time based on the previous group + pause duration + step duration + time offset
                 GaitGroup *prevGroup = mCurrGait.getGroup(grpIdx > 0 ? grpIdx - 1 : mCurrGaitGroupSize - 1);
                 currGroup->setStartTime(prevGroup->getStartTime() + prevGroup->getPauseDuration(), mTarget->mStepDuration, mCurrGait.getTimeOffset());
 
+                //Pass the start time to the hexapod's feet
                 for (int footIdx = 0; footIdx < currFeet.size(); footIdx++)
                     mTarget->setNextStep(currFeet[footIdx], mGroupMoveDir[grpIdx], currGroup->getStartTime());
             }
             else if (currGroupState == GAITGROUPSTATE::STOPPING)
             {
+                //Checks how many group have stopped
                 mGroupState[grpIdx] = GAITGROUPSTATE::STOPPED;
                 mStoppedGroupCount++;
 
+                //If all groups were stopped, then set the move type to idle
                 if (mStoppedGroupCount >= mCurrGaitGroupSize)
                 {
                     mMoveType = MOVETYPE::IDLE;
