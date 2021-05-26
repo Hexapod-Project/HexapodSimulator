@@ -289,17 +289,9 @@ void Hexapod::stepTowardsTarget()
 
         if (timeLapsedRatio >= 0 && timeLapsedRatio <= 1)
         {
-            // if (!mCrabMode)
-            // {
-            //     vec3 startFootPos = mLegs[footIdx]->mFootStartPos;
-            //     float newFootAngle = mLegs[footIdx]->mFootStartAngle + getSmallestAngle(mCurrDir - mStartDir);
-            //     mStepOffsetPos[footIdx].x += startFootPos cos(newFootAngle) * FOOT_DIST + mBody.mLocalPosX;
-            //     newPos.z = sin(newFootAngle) * FOOT_DIST + mBody.mLocalPosZ;
-            // }
-
             vec3 newPos = mLegs[footIdx]->mTargetFootPos;
             vec3 stepStartPos = mStepStartPos[footIdx];
-            
+
             //Calculate the new position based on the time lapsed and the offset
             vec3 offset = mStepOffsetPos[footIdx] * timeLapsedRatio;
             offset.y = sin(timeLapsedRatio * M_PI) * mStepHeight - stepStartPos.y * timeLapsedRatio;
@@ -319,10 +311,18 @@ void Hexapod::setNextStep(int footIdx, int startTime, bool isStop)
     vec3 startFootPos = mLegs[footIdx]->mFootStartPos + mBody.mLocalPos;
     vec3 currFootPos = mLegs[footIdx]->mTargetFootPos;
 
+    if (!mCrabMode)
+    {        
+        float newFootAngle = mLegs[footIdx]->mFootStartAngle + getSmallestAngle(mCurrDir - mStartDir);
+        startFootPos.x = cos(newFootAngle) * FOOT_DIST + mBody.mLocalPosX;        
+        startFootPos.z = sin(newFootAngle) * FOOT_DIST + mBody.mLocalPosZ; 
+    }
+
     vec3 footDiff = currFootPos - startFootPos;
+    float footDist = sqrt(footDiff.x * footDiff.x + footDiff.z * footDiff.z);
 
     float offsetX = cos(mCurrDir) * mStepDist - footDiff.x;
-    float offsetZ = sin(mCurrDir) * mStepDist - footDiff.z;
+    float offsetZ = sin(mCurrDir) * mStepDist - footDiff.z;    
 
     if (!isStop)
         mStepOffsetPos[footIdx] = vec3(offsetX, 0, offsetZ);

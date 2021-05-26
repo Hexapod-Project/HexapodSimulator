@@ -34,7 +34,7 @@ private:
 
     std::vector<Leg3D *> mLegs;
 
-    bool mCrabMode = false;
+    bool mCrabMode = true;
 
     float mStartDir = FORWARD;
     float mCurrDir = FORWARD;
@@ -52,12 +52,12 @@ private:
     GaitManager *mGaitManager;
 
     //Walk properties
-    const int BASE_STEP_DURATION = 500;       //Duration in ms that each step takes to complete
+    const int BASE_STEP_DURATION = 1000;       //Duration in ms that each step takes to complete
     const float BASE_MAXROT_ANGLE = M_PI / 4; //Maximum angle of rotation per step
 
     float mWalkSpeed = 1.0;
     float mStepHeight = 1.0;
-    float mStepDist = 1;    
+    float mStepDist = 2;    
 
     void walk(float walkDir);
     void centerBody();

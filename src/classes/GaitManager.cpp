@@ -104,13 +104,13 @@ void GaitManager::runGait(vec3 dir)
                     _isStopping = false;
                 }
             }
+        }
 
-            if (timeLapsedRatio < 0 || timeLapsedRatio >= 1)
-            {
-                //Pass the start time to the hexapod's feet
-                for (int footIdx = 0; footIdx < currFeet.size(); footIdx++)
-                    mTarget->setNextStep(currFeet[footIdx], currGroup->getStartTime(), _isStopping);
-            }
+        if (timeLapsedRatio < 0 || timeLapsedRatio >= 1)
+        {            
+            //Pass the start time to the hexapod's feet
+            for (int footIdx = 0; footIdx < currFeet.size(); footIdx++)
+                mTarget->setNextStep(currFeet[footIdx], currGroup->getStartTime(), _isStopping);
         }
     }
 }

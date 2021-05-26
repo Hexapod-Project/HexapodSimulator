@@ -31,7 +31,7 @@ private:
     vec2 mWorldAxisViewportSize;
 
     bool mFollowHexapod = false;
-    vec3 mCamOffset = vec3(0, 15, -20);
+    vec3 mCamOffset = vec3(0, 25, -10);
 
     //Shadow mapping variables
     unsigned int mDepthMapFBO;
