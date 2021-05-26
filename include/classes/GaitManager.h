@@ -20,27 +20,29 @@ public:
     void runGait(vec3 dir = vec3(0));
     void stopGait();
     GAITTYPE getGaitType();
-    void setGaitType(GAITTYPE gaitType, GAITGROUPSTATE groupState = GAITGROUPSTATE::MOVING); 
+    void setGaitType(GAITTYPE gaitType, GAITGROUPSTATE groupState = GAITGROUPSTATE::MOVING);
     void setWalkDir(float walkDir);
     void setRotateDir(ROTATEDIR rotateDir);
-    ROTATEDIR getRotateDir();    
+    ROTATEDIR getRotateDir();
     MOVESTATE getMoveState();
     bool isWalking();
     bool isMoving();
     bool isStopping();
+    int getStepDuration();
 
-private:    
+    int mCurrGaitGroupSize;
+
+private:
     Hexapod *mTarget;
 
     GAITTYPE mCurrGaitType;
     Gait mCurrGait;
-    int mCurrGaitGroupSize;    
 
     MOVESTATE mMoveState = MOVESTATE::IDLE;
     ROTATEDIR mRotateDir = ROTATEDIR::COUNTERCLOCKWISE;
 
-    float mWalkDir = M_PI / 2;    
-    
+    float mWalkDir = M_PI / 2;
+
     bool _isStopping = false;
 
     int mStoppedGroupCount = 0;
@@ -51,8 +53,8 @@ private:
 
     void restartGait();
     void setFeetBaseRot();
-    void setFeetRadius();   
-    void changeAllGroupState(GAITGROUPSTATE groupState); 
+    void setFeetRadius();
+    void changeAllGroupState(GAITGROUPSTATE groupState);
 
     int mCurrGroupIdx = 0;
 };

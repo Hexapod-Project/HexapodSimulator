@@ -21,14 +21,11 @@ public:
     void setup();
     void update();
     void draw();
-    void setWalkProperties(float walkSpeed, float stepHeight, float stepDist);
+    void setWalkProperties(float stepHeight, float stepDist);
     void setNextStep(int footIdx, int startTime, bool isStop = false);
     void changeDir(double dir, float grpSize, int startTime);
     vec3 getPos();
     void drawCoord();
-
-    int mStepDuration;
-
 private:
     Body mBody;
 
@@ -37,25 +34,26 @@ private:
     bool mCrabMode = true;
 
     float mStartDir = FORWARD;
-    float mCurrDir = FORWARD;
+    float mMoveDir = FORWARD;
+    float mFaceDir = FORWARD;
+    float mTargetDir = FORWARD;
     float mChangeStartDir;
     float mChangeOffsetDir;
     float mChangDirStartTime;
+    float mChangeDirDuration;
 
     vec3 mStepStartPos[LEG_COUNT];
+    vec3 mStepBodyStartPos[LEG_COUNT];
     float mStepFootAngle[LEG_COUNT];
     vec3 mStepOffsetPos[LEG_COUNT];
     int mStepStartTimes[LEG_COUNT];
+    bool mStepFootIsStop[LEG_COUNT];
 
     int mComboGaitType = GAITTYPE::TRIPOD;
 
     GaitManager *mGaitManager;
 
     //Walk properties
-    const int BASE_STEP_DURATION = 1000;       //Duration in ms that each step takes to complete
-    const float BASE_MAXROT_ANGLE = M_PI / 4; //Maximum angle of rotation per step
-
-    float mWalkSpeed = 1.0;
     float mStepHeight = 1.0;
     float mStepDist = 2;    
 

@@ -13,9 +13,13 @@ GaitManager::GaitManager(Hexapod *target)
 void GaitManager::initGaits()
 {
     mGaits.resize(4);
+
+    mGaits[GAITTYPE::TRIPOD].setStepDuration(BASE_STEP_DURATION / 2);
     mGaits[GAITTYPE::TRIPOD].setGroups({GaitGroup({LEG::FRONTLEFT, LEG::MIDRIGHT, LEG::BACKLEFT}),
                                         GaitGroup({LEG::FRONTRIGHT, LEG::MIDLEFT, LEG::BACKRIGHT})});
 
+    mGaits[GAITTYPE::RIPPLE].setStepDuration(BASE_STEP_DURATION / 3);
+    mGaits[GAITTYPE::RIPPLE].setTimeOffset(-BASE_STEP_DURATION / 6);
     mGaits[GAITTYPE::RIPPLE].setGroups({GaitGroup({LEG::FRONTRIGHT}),
                                         GaitGroup({LEG::MIDRIGHT}),
                                         GaitGroup({LEG::BACKRIGHT}),
@@ -23,9 +27,9 @@ void GaitManager::initGaits()
                                         GaitGroup({LEG::MIDLEFT}),
                                         GaitGroup({LEG::FRONTLEFT})});
 
-    mGaits[GAITTYPE::RIPPLE].setTimeOffset(-mTarget->mStepDuration / 2);
-
-    int triplePauseDuration = (7 / 20) * mTarget->mStepDuration;
+    mGaits[GAITTYPE::TRIPLE].setStepDuration(BASE_STEP_DURATION / 3);
+    mGaits[GAITTYPE::TRIPLE].setTimeOffset(-mGaits[GAITTYPE::TRIPLE].getStepDuration() / 4.5);
+    int triplePauseDuration = (7 / 20) * mGaits[GAITTYPE::TRIPLE].getStepDuration();
     mGaits[GAITTYPE::TRIPLE].setGroups({GaitGroup({LEG::FRONTLEFT}),
                                         GaitGroup({LEG::MIDRIGHT}),
                                         GaitGroup({LEG::BACKLEFT}, triplePauseDuration),
@@ -33,16 +37,14 @@ void GaitManager::initGaits()
                                         GaitGroup({LEG::MIDLEFT}),
                                         GaitGroup({LEG::BACKRIGHT}, triplePauseDuration)});
 
-    mGaits[GAITTYPE::TRIPLE].setTimeOffset(-mTarget->mStepDuration / 1.5);
-
+    mGaits[GAITTYPE::WAVE].setStepDuration(BASE_STEP_DURATION / 3);
+    mGaits[GAITTYPE::WAVE].setTimeOffset(-mGaits[GAITTYPE::WAVE].getStepDuration() / 6);
     mGaits[GAITTYPE::WAVE].setGroups({GaitGroup({LEG::FRONTLEFT}),
                                       GaitGroup({LEG::MIDLEFT}),
                                       GaitGroup({LEG::BACKLEFT}),
                                       GaitGroup({LEG::FRONTRIGHT}),
                                       GaitGroup({LEG::MIDRIGHT}),
                                       GaitGroup({LEG::BACKRIGHT})});
-
-    mGaits[GAITTYPE::WAVE].setTimeOffset(-mTarget->mStepDuration / 2);
 }
 
 void GaitManager::startGait(MOVESTATE moveType, GAITTYPE gaitType)
@@ -54,7 +56,7 @@ void GaitManager::startGait(MOVESTATE moveType, GAITTYPE gaitType)
 
     setGaitType(gaitType);
 
-    mCurrGait.initStartTime(getCurrTime(), mTarget->mStepDuration);
+    mCurrGait.initStartTime(getCurrTime(), mCurrGait.getStepDuration());
 
     for (int grpIdx = 0; grpIdx < mCurrGait.getGroupSize(); grpIdx++)
     {
@@ -75,7 +77,7 @@ void GaitManager::runGait(vec3 dir)
         GaitGroup *currGroup = mCurrGait.getGroup(grpIdx);
 
         float timeLapsed = currTime - currGroup->getStartTime();
-        float timeLapsedRatio = timeLapsed / mTarget->mStepDuration;
+        float timeLapsedRatio = timeLapsed / mCurrGait.getStepDuration();
 
         std::vector<LEG> currFeet = currGroup->getLegIndices();
 
@@ -86,7 +88,7 @@ void GaitManager::runGait(vec3 dir)
             {
                 //Set the next step start time based on the previous group + pause duration + step duration + time offset
                 GaitGroup *prevGroup = mCurrGait.getGroup(grpIdx > 0 ? grpIdx - 1 : mCurrGaitGroupSize - 1);
-                currGroup->setStartTime(prevGroup->getStartTime() + prevGroup->getPauseDuration(), mTarget->mStepDuration, mCurrGait.getTimeOffset());
+                currGroup->setStartTime(prevGroup->getStartTime() + prevGroup->getPauseDuration(), mCurrGait.getStepDuration(), mCurrGait.getTimeOffset());
 
                 if (_isStopping && mGroupState[grpIdx] != GAITGROUPSTATE::STOPPING)
                     mGroupState[grpIdx] = GAITGROUPSTATE::STOPPING;
@@ -107,7 +109,7 @@ void GaitManager::runGait(vec3 dir)
         }
 
         if (timeLapsedRatio < 0 || timeLapsedRatio >= 1)
-        {            
+        {
             //Pass the start time to the hexapod's feet
             for (int footIdx = 0; footIdx < currFeet.size(); footIdx++)
                 mTarget->setNextStep(currFeet[footIdx], currGroup->getStartTime(), _isStopping);
@@ -145,11 +147,8 @@ void GaitManager::setGaitType(GAITTYPE gaitType, GAITGROUPSTATE groupState)
 
 void GaitManager::setWalkDir(float walkDir)
 {
-    if (!compareFloats(mWalkDir, walkDir))
-    {
-        mWalkDir = walkDir;
-        mTarget->changeDir(walkDir, mCurrGaitGroupSize, getCurrTime());
-    }
+    mWalkDir = walkDir;
+    mTarget->changeDir(walkDir, mCurrGaitGroupSize, getCurrTime());
 }
 
 void GaitManager::setRotateDir(ROTATEDIR rotateDir)
@@ -187,4 +186,9 @@ bool GaitManager::isMoving()
 bool GaitManager::isStopping()
 {
     return _isStopping;
+}
+
+int GaitManager::getStepDuration()
+{
+    return mCurrGait.getStepDuration();
 }

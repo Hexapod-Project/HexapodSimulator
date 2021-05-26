@@ -67,3 +67,13 @@ GaitGroup *Gait::getGroup(int idx)
 {
     return &mGaitGroups[idx];
 }
+
+void Gait::setStepDuration(int stepDuration)
+{
+    mStepDuration = stepDuration;
+}
+
+int Gait::getStepDuration()
+{
+    return mStepDuration;
+}
