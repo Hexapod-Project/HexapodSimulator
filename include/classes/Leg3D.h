@@ -14,13 +14,24 @@ public:
     Leg3D(vec3 pos, float hipLength, float femurLength, float tibiaLength, bool isRightLeg = false);
     float getHipAngle();
     float getFemurAngle();
-    float getTibiaAngle();
-    vec3 getFootWorldPos();
+    float getTibiaAngle();    
     void setFootTargetPos(vec3 targetPos);
+    void resetFootTargetPos();
+    vec3 getFootWorldPos();
     void calculateIK();            
     void setup();
     void update();
     void draw();
+
+    //These are used by ImGui
+    float mTargetFootPosX;
+    float mTargetFootPosY;
+    float mTargetFootPosZ;
+
+    vec3 mTargetFootPos;
+
+    vec3 mFootStartPos;
+    float mFootStartAngle;
 
 private:    
     float mFemurLength;
@@ -28,15 +39,14 @@ private:
     float mTibiaLength;
     float mTibiaLengthSqr;
     float mLegLength;
-    float mLegLengthSqr;
+    float mLegLengthSqr;    
     
     Servo mHipServo;
     Servo mFemurServo;
     Servo mTibiaServo;
     Foot mFoot;
     
-    gl::BatchRef mTargetFootPosMesh;
-    vec3 mTargetFootPos;
+    gl::BatchRef mTargetFootPosMesh;    
     mat4 mTargetFootPosMatrix;
 
     //For debugging purposes

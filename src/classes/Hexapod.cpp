@@ -15,12 +15,16 @@ void Hexapod::setup()
 
     mBody = Body(BODY_THICKNESS, BODY_WIDTH, BODY_LENGTH);
     mBody.setBase(vec3(0), vec3(0));
+    mBody.mLocalPosY = 1;
+
+    mBody.mStartPos = vec3(0, 1, 0);
 
     mLegs.clear();
+
     //Create the 6 legs
     for (int footIdx = 0; footIdx < LEG_COUNT; footIdx++)
     {
-        //The right legs' positions are located in the evevn indices of the legOffsets array
+        //The right legs' positions are located in the even indices of the legOffsets array
         bool isRightLeg = footIdx % 2;
 
         vec3 legPos = legOffsets[footIdx];
@@ -28,28 +32,14 @@ void Hexapod::setup()
         leg->setParent(&mBody);
         leg->setup();
 
-        float footAngle = atan2(legPos.z, legPos.x);
-        vec3 footPos = vec3(FOOT_DIST * cos(footAngle), FOOT_Y, FOOT_DIST * sin(footAngle));
-        leg->setFootTargetPos(footPos);
-
-        mFeetRadius[footIdx] = FOOT_DIST;
-        mFeetStartPos[footIdx] = footPos;
-        mFeetStartRot[footIdx] = footAngle;
-
-        mFeetCurrPosX[footIdx] = footPos.x;
-        mFeetCurrPosY[footIdx] = footPos.y;
-        mFeetCurrPosZ[footIdx] = footPos.z;
-
-        mFeetOffsetPos[footIdx] = footPos;
+        leg->mFootStartAngle = atan2(legPos.z, legPos.x);
+        leg->mFootStartPos = vec3(cos(leg->mFootStartAngle) * FOOT_DIST, FOOT_Y, sin(leg->mFootStartAngle) * FOOT_DIST);
+        leg->setFootTargetPos(leg->mFootStartPos);
 
         mLegs.push_back(leg);
     }
 
-    // mGaitManager->setFeetBasePos(std::vector<vec3>(mFootStartPos, mFootStartPos + 6));
-    // mGaitManager->setBodyBasePos(vec3(mBody.mPosX, mBody.mPosY, mBody.mPosZ));
     mStepDuration = BASE_STEP_DURATION / mWalkSpeed;
-
-    mStepStartTimes.resize(6, 0);
 
     mGaitManager = new GaitManager(this);
 
@@ -85,76 +75,50 @@ void Hexapod::drawGUI()
     ImGui::Columns(1);
     if (ImGui::Button("Reset Body Rotations"))
     {
-        mBody.mRoll = 0;
-        mBody.mYaw = 0;
-        mBody.mPitch = 0;
+        resetBodyRot();
     }
 
     ImGui::Separator();
     ImGui::Text("Foot Positions");
     ImGui::Columns(4);
-    ImGui::DragFloat("FL X", &mFeetCurrPosX[LEG::FRONTLEFT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("FR X", &mFeetCurrPosX[LEG::FRONTRIGHT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("ML X", &mFeetCurrPosX[LEG::MIDLEFT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("MR X", &mFeetCurrPosX[LEG::MIDRIGHT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("BL X", &mFeetCurrPosX[LEG::BACKLEFT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("BR X", &mFeetCurrPosX[LEG::BACKRIGHT], 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("FL X", &mLegs[LEG::FRONTLEFT]->mTargetFootPosX, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("FR X", &mLegs[LEG::FRONTRIGHT]->mTargetFootPosX, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("ML X", &mLegs[LEG::MIDLEFT]->mTargetFootPosX, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("MR X", &mLegs[LEG::MIDRIGHT]->mTargetFootPosX, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("BL X", &mLegs[LEG::BACKLEFT]->mTargetFootPosX, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("BR X", &mLegs[LEG::BACKRIGHT]->mTargetFootPosX, 0.1f, -FLT_MAX, FLT_MAX);
     ImGui::NextColumn();
-    ImGui::DragFloat("FL Y", &mFeetCurrPosY[LEG::FRONTLEFT], 0.1f, 0, FLT_MAX);
-    ImGui::DragFloat("FR Y", &mFeetCurrPosY[LEG::FRONTRIGHT], 0.1f, 0, FLT_MAX);
-    ImGui::DragFloat("ML Y", &mFeetCurrPosY[LEG::MIDLEFT], 0.1f, 0, FLT_MAX);
-    ImGui::DragFloat("MR Y", &mFeetCurrPosY[LEG::MIDRIGHT], 0.1f, 0, FLT_MAX);
-    ImGui::DragFloat("BL Y", &mFeetCurrPosY[LEG::BACKLEFT], 0.1f, 0, FLT_MAX);
-    ImGui::DragFloat("BR Y", &mFeetCurrPosY[LEG::BACKRIGHT], 0.1f, 0, FLT_MAX);
+    ImGui::DragFloat("FL Y", &mLegs[LEG::FRONTLEFT]->mTargetFootPosY, 0.1f, 0, FLT_MAX);
+    ImGui::DragFloat("FR Y", &mLegs[LEG::FRONTRIGHT]->mTargetFootPosY, 0.1f, 0, FLT_MAX);
+    ImGui::DragFloat("ML Y", &mLegs[LEG::MIDLEFT]->mTargetFootPosY, 0.1f, 0, FLT_MAX);
+    ImGui::DragFloat("MR Y", &mLegs[LEG::MIDRIGHT]->mTargetFootPosY, 0.1f, 0, FLT_MAX);
+    ImGui::DragFloat("BL Y", &mLegs[LEG::BACKLEFT]->mTargetFootPosY, 0.1f, 0, FLT_MAX);
+    ImGui::DragFloat("BR Y", &mLegs[LEG::BACKRIGHT]->mTargetFootPosY, 0.1f, 0, FLT_MAX);
     ImGui::NextColumn();
-    ImGui::DragFloat("FL Z", &mFeetCurrPosZ[LEG::FRONTLEFT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("FR Z", &mFeetCurrPosZ[LEG::FRONTRIGHT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("ML Z", &mFeetCurrPosZ[LEG::MIDLEFT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("MR Z", &mFeetCurrPosZ[LEG::MIDRIGHT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("BL Z", &mFeetCurrPosZ[LEG::BACKLEFT], 0.1f, -FLT_MAX, FLT_MAX);
-    ImGui::DragFloat("BR Z", &mFeetCurrPosZ[LEG::BACKRIGHT], 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("FL Z", &mLegs[LEG::FRONTLEFT]->mTargetFootPosZ, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("FR Z", &mLegs[LEG::FRONTRIGHT]->mTargetFootPosZ, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("ML Z", &mLegs[LEG::MIDLEFT]->mTargetFootPosZ, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("MR Z", &mLegs[LEG::MIDRIGHT]->mTargetFootPosZ, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("BL Z", &mLegs[LEG::BACKLEFT]->mTargetFootPosZ, 0.1f, -FLT_MAX, FLT_MAX);
+    ImGui::DragFloat("BR Z", &mLegs[LEG::BACKRIGHT]->mTargetFootPosZ, 0.1f, -FLT_MAX, FLT_MAX);
     ImGui::NextColumn();
     if (ImGui::Button("Reset FL"))
-    {
-        mFeetCurrPosX[LEG::FRONTLEFT] = mFeetStartPos[LEG::FRONTLEFT].x;
-        mFeetCurrPosY[LEG::FRONTLEFT] = mFeetStartPos[LEG::FRONTLEFT].y;
-        mFeetCurrPosZ[LEG::FRONTLEFT] = mFeetStartPos[LEG::FRONTLEFT].z;
-    }
+        mLegs[FRONTLEFT]->resetFootTargetPos();
 
     if (ImGui::Button("Reset FR"))
-    {
-        mFeetCurrPosX[LEG::FRONTRIGHT] = mFeetStartPos[LEG::FRONTRIGHT].x;
-        mFeetCurrPosY[LEG::FRONTRIGHT] = mFeetStartPos[LEG::FRONTRIGHT].y;
-        mFeetCurrPosZ[LEG::FRONTRIGHT] = mFeetStartPos[LEG::FRONTRIGHT].z;
-    }
+        mLegs[FRONTRIGHT]->resetFootTargetPos();
 
     if (ImGui::Button("Reset ML"))
-    {
-        mFeetCurrPosX[LEG::MIDLEFT] = mFeetStartPos[LEG::MIDLEFT].x;
-        mFeetCurrPosY[LEG::MIDLEFT] = mFeetStartPos[LEG::MIDLEFT].y;
-        mFeetCurrPosZ[LEG::MIDLEFT] = mFeetStartPos[LEG::MIDLEFT].z;
-    }
+        mLegs[MIDLEFT]->resetFootTargetPos();
 
     if (ImGui::Button("Reset MR"))
-    {
-        mFeetCurrPosX[LEG::MIDRIGHT] = mFeetStartPos[LEG::MIDRIGHT].x;
-        mFeetCurrPosY[LEG::MIDRIGHT] = mFeetStartPos[LEG::MIDRIGHT].y;
-        mFeetCurrPosZ[LEG::MIDRIGHT] = mFeetStartPos[LEG::MIDRIGHT].z;
-    }
+        mLegs[MIDRIGHT]->resetFootTargetPos();
 
     if (ImGui::Button("Reset BL"))
-    {
-        mFeetCurrPosX[LEG::BACKLEFT] = mFeetStartPos[LEG::BACKLEFT].x;
-        mFeetCurrPosY[LEG::BACKLEFT] = mFeetStartPos[LEG::BACKLEFT].y;
-        mFeetCurrPosZ[LEG::BACKLEFT] = mFeetStartPos[LEG::BACKLEFT].z;
-    }
+        mLegs[BACKLEFT]->resetFootTargetPos();
 
     if (ImGui::Button("Reset BR"))
-    {
-        mFeetCurrPosX[LEG::BACKRIGHT] = mFeetStartPos[LEG::BACKRIGHT].x;
-        mFeetCurrPosY[LEG::BACKRIGHT] = mFeetStartPos[LEG::BACKRIGHT].y;
-        mFeetCurrPosZ[LEG::BACKRIGHT] = mFeetStartPos[LEG::BACKRIGHT].z;
-    }
+        mLegs[BACKRIGHT]->resetFootTargetPos();
 
     ImGui::Columns(1);
 
@@ -163,93 +127,63 @@ void Hexapod::drawGUI()
 
     //Walk/Rotate cycle
     ImGui::Separator();
-    ImGui::Text("Walk/Rotate Cycle");
+    ImGui::Text("Walk Cycle");
 
     ImGui::Columns(3);
     ImGui::Combo("Gait", &mComboGaitType, std::vector<std::string>{"Tripod", "Ripple", "Triple", "Wave"});
 
     ImGui::NextColumn();
-    const char *walkBtnStr = mGaitManager->isWalking() ? "Stop" : "Walk";
-    const char *rotateBtnStr = mGaitManager->isRotating() ? "Stop" : "Rotate";
-
-    if (mGaitManager->isStopping())
-    {
-        walkBtnStr = "Stopping";
-        rotateBtnStr = "Stopping";
-    }
-
-    if (ImGui::Button(walkBtnStr, BTN_SIZE))
-    {
-        if (mGaitManager->isWalking())
-            mGaitManager->stopGait();
-        else if (!mGaitManager->isMoving())
-            mGaitManager->startGait(MOVETYPE::WALK, (GAITTYPE)mComboGaitType);
-    }
+    ImGui::Checkbox("Crab Mode", &mCrabMode);
 
     ImGui::NextColumn();
-    if (ImGui::Button(rotateBtnStr, BTN_SIZE))
+    if (ImGui::Button("Reset"))
     {
-        if (mGaitManager->isRotating())
-            mGaitManager->stopGait();
-        else if (!mGaitManager->isMoving())
-            mGaitManager->startGait(MOVETYPE::ROTATE, (GAITTYPE)mComboGaitType);
+        resetBodyPos();
+        resetBodyRot();
+        resetFeetPos();
     }
 
     //Walk Directions buttons
     ImGui::Columns(1);
     ImGui::Text("Walk Directions");
 
-    //TODO: Walk facing the walk direction
-    ImGui::Checkbox("Crab Mode", &mCrabMode);
-
     ImGui::Columns(3);
     if (ImGui::Button("Left Forward", BTN_SIZE))
-        mGaitManager->setWalkDir(LEFT_FORWARD);
+        walk(LEFT_FORWARD);
 
     ImGui::NextColumn();
     if (ImGui::Button("Forward", BTN_SIZE))
-        mGaitManager->setWalkDir(FORWARD);
+        walk(FORWARD);
 
     ImGui::NextColumn();
     if (ImGui::Button("Right Forward", BTN_SIZE))
-        mGaitManager->setWalkDir(RIGHT_FORWARD);
+        walk(RIGHT_FORWARD);
 
     ImGui::NextColumn();
     if (ImGui::Button("Left", BTN_SIZE))
-        mGaitManager->setWalkDir(LEFT);
+        walk(LEFT);
 
     ImGui::NextColumn();
-    ImGui::NextColumn();
+    const char *stopBtnStr = mGaitManager->isStopping() ? "Stopping" : "Stop";
 
+    if (ImGui::Button(stopBtnStr, BTN_SIZE))
+        mGaitManager->stopGait();
+
+    ImGui::NextColumn();
     if (ImGui::Button("Right", BTN_SIZE))
-        mGaitManager->setWalkDir(RIGHT);
+        walk(RIGHT);
 
     ImGui::NextColumn();
-
     if (ImGui::Button("Left Backward", BTN_SIZE))
-        mGaitManager->setWalkDir(LEFT_BACKWARD);
+        walk(LEFT_BACKWARD);
 
     ImGui::NextColumn();
-
     if (ImGui::Button("Backward", BTN_SIZE))
-        mGaitManager->setWalkDir(BACKWARD);
+        walk(BACKWARD);
 
     ImGui::NextColumn();
-
     if (ImGui::Button("Right Backward", BTN_SIZE))
-        mGaitManager->setWalkDir(RIGHT_BACKWARD);
-
-    //Rotate Directions buttons
-    ImGui::Columns(1);
-    ImGui::Text("Rotate Directions");
-
-    if (ImGui::Button(mGaitManager->getRotateDir() == ROTATEDIR::CLOCKWISE ? "CW" : "CCW", BTN_SIZE))
-    {
-        if (mGaitManager->getRotateDir() == ROTATEDIR::CLOCKWISE)
-            mGaitManager->setRotateDir(ROTATEDIR::COUNTERCLOCKWISE);
-        else
-            mGaitManager->setRotateDir(ROTATEDIR::CLOCKWISE);
-    }
+        walk(RIGHT_BACKWARD);
 
     ImGui::End();
 }
@@ -258,17 +192,23 @@ void Hexapod::resetFeetPos()
 {
     for (int i = 0; i < LEG_COUNT; i++)
     {
-        mFeetCurrPosX[i] = mFeetStartPos[i].x;
-        mFeetCurrPosY[i] = mFeetStartPos[i].y;
-        mFeetCurrPosZ[i] = mFeetStartPos[i].z;
+        mLegs[i]->resetFootTargetPos();
     }
 }
 
 void Hexapod::resetBodyPos()
 {
-    mBody.mLocalPosX = 0;
-    mBody.mLocalPosY = 1;
-    mBody.mLocalPosZ = 0;
+    mBody.mLocalPosX = mBody.mStartPos.x;
+    mBody.mLocalPosY = mBody.mStartPos.y;
+    mBody.mLocalPosZ = mBody.mStartPos.z;
+}
+
+void Hexapod::resetBodyRot()
+{
+    mBody.mRoll = 0;
+    mBody.mYaw = 0;
+    mBody.mPitch = 0;
+    mCurrDir = mStartDir;
 }
 
 void Hexapod::update()
@@ -277,17 +217,18 @@ void Hexapod::update()
 
     //Manage the feet positions if the hexapod is currently moving
     if (isMoving)
+    {
         mGaitManager->runGait();
 
-    //Take a step towards the new feet positions
-    stepTowardsTarget();
-    setFeetToCurrPos();
+        //Take a step towards the new feet positions
+        stepTowardsTarget();
 
-    //Center/Orient the body
-    if (mGaitManager->isWalking())
+        //Center/Orient the body
         centerBody();
-    else if (mGaitManager->isRotating())
-        orientToFront();
+
+        if (!mCrabMode)
+            orientBody();
+    }
 
     //Update the legs transformation visually
     for (Leg3D *leg : mLegs)
@@ -317,135 +258,107 @@ void Hexapod::setWalkProperties(float walkSpeed, float stepHeight, float stepDis
     mWalkSpeed = walkSpeed;
     mStepHeight = stepHeight;
     mStepDist = stepDist;
-    mHalfStepDist = stepDist / 2;
     mStepDuration = BASE_STEP_DURATION / mWalkSpeed;
 }
 
-void Hexapod::setFootTarget(int footIdx, vec3 footPos)
+void Hexapod::walk(float walkDir)
 {
-    mFeetOffsetPos[footIdx] = footPos;
+    mGaitManager->setWalkDir(walkDir);
+
+    if (!mGaitManager->isMoving())
+    {
+        for (int i = 0; i < LEG_COUNT; i++)
+        {
+            mStepStartPos[i] = mLegs[i]->mTargetFootPos;
+            mStepOffsetPos[i] = vec3(0);
+        }
+
+        mGaitManager->startGait(MOVESTATE::WALK, (GAITTYPE)mComboGaitType);
+    }
 }
 
 void Hexapod::stepTowardsTarget()
 {
-    mRotatedLegs.clear();
-    mDeltaAngle = 0;
+    MOVESTATE moveType = mGaitManager->getMoveState();
 
-    MOVETYPE moveType = mGaitManager->getMoveType();
+    float newDir = mCurrDir;
 
     for (int footIdx = 0; footIdx < mLegs.size(); footIdx++)
     {
         float timeLapsedRatio = getTimeLapsedRatio(mStepStartTimes[footIdx], mStepDuration);
-        
-        vec3 newPos = vec3(mFeetCurrPosX[footIdx], mFeetCurrPosY[footIdx], mFeetCurrPosZ[footIdx]);
-
-        vec3 stepStartPos = mFeetStepStartPos[footIdx];
-
-        //Calculate the step height based on the time lapsed
-        float y = sin(timeLapsedRatio * M_PI) * mStepHeight - stepStartPos.y * timeLapsedRatio;
 
         if (timeLapsedRatio >= 0 && timeLapsedRatio <= 1)
         {
-            if (moveType == MOVETYPE::WALK)
-            {
-                //Calculate the new position based on the time lapsed and the offset
-                vec3 offset = mFeetOffsetPos[footIdx] * timeLapsedRatio;
-                offset.y = y;                
-                newPos = stepStartPos + offset;
-            }
-            else if (moveType == MOVETYPE::ROTATE)
-            {
-                //Calculate the new angle of the foot based on the current time lapsed and offset angle
-                float startAngle = mFeetStepStartRot[footIdx];
-                float offsetAngle = mFeetOffsetRot[footIdx] * timeLapsedRatio;
-                float newAngle = toPositiveAngle(startAngle + offsetAngle);
+            // if (!mCrabMode)
+            // {
+            //     vec3 startFootPos = mLegs[footIdx]->mFootStartPos;
+            //     float newFootAngle = mLegs[footIdx]->mFootStartAngle + getSmallestAngle(mCurrDir - mStartDir);
+            //     mStepOffsetPos[footIdx].x += startFootPos cos(newFootAngle) * FOOT_DIST + mBody.mLocalPosX;
+            //     newPos.z = sin(newFootAngle) * FOOT_DIST + mBody.mLocalPosZ;
+            // }
 
-                //Set the new position based on the new angle
-                float footRadius = mFeetRadius[footIdx];
-                newPos = vec3(cos(newAngle) * footRadius, y, sin(newAngle) * footRadius);
+            vec3 newPos = mLegs[footIdx]->mTargetFootPos;
+            vec3 stepStartPos = mStepStartPos[footIdx];
+            
+            //Calculate the new position based on the time lapsed and the offset
+            vec3 offset = mStepOffsetPos[footIdx] * timeLapsedRatio;
+            offset.y = sin(timeLapsedRatio * M_PI) * mStepHeight - stepStartPos.y * timeLapsedRatio;
 
-                //Calculate the changed in angle compared to the frame before this
-                float currAngle = toPositiveAngle(atan2(mFeetCurrPosZ[footIdx], mFeetCurrPosX[footIdx]));
-                float deltaAngle = getSmallestAngle(newAngle - currAngle);
+            newPos = stepStartPos + offset;
 
-                //Add the delta angle to the global variable to be used to orient the body
-                mDeltaAngle += deltaAngle;
-                //Add the rotated foot indices to be skipped from orienting the body
-                mRotatedLegs.push_back(footIdx);
-            }
+            //Update the feet current position to the new position
+            mLegs[footIdx]->mTargetFootPosX = newPos.x;
+            mLegs[footIdx]->mTargetFootPosY = newPos.y;
+            mLegs[footIdx]->mTargetFootPosZ = newPos.z;
         }
-
-        //Update the feet current position to the new position
-        mFeetCurrPosX[footIdx] = newPos.x;
-        mFeetCurrPosY[footIdx] = newPos.y;
-        mFeetCurrPosZ[footIdx] = newPos.z;
-
-        //Update the feet current radius(distance from the body's origin)
-        vec2 footRadiusDiff = vec2(newPos.x - mBody.mLocalPosX, newPos.z - mBody.mLocalPosZ);
-        mFeetRadius[footIdx] = sqrt(dot(footRadiusDiff, footRadiusDiff));
     }
-
-    mDeltaAngle = mDeltaAngle / mRotatedLegs.size();
 }
 
-void Hexapod::setNextStep(int footIdx, double dir, int startTime, bool isStop)
+void Hexapod::setNextStep(int footIdx, int startTime, bool isStop)
 {
-    updateNextStep(footIdx, dir, isStop);
-    mStepStartTimes[footIdx] = startTime;
-}
+    vec3 startFootPos = mLegs[footIdx]->mFootStartPos + mBody.mLocalPos;
+    vec3 currFootPos = mLegs[footIdx]->mTargetFootPos;
 
-void Hexapod::updateNextStep(int footIdx, double dir, bool isStop)
-{
-    vec3 currFootPos = vec3(mFeetCurrPosX[footIdx], mFeetCurrPosY[footIdx], mFeetCurrPosZ[footIdx]);
+    vec3 footDiff = currFootPos - startFootPos;
 
-    MOVETYPE moveType = mGaitManager->getMoveType();
+    float offsetX = cos(mCurrDir) * mStepDist - footDiff.x;
+    float offsetZ = sin(mCurrDir) * mStepDist - footDiff.z;
 
-    if (moveType == MOVETYPE::WALK)
-    {
-        vec2 diff = vec2(currFootPos.x - mFeetStartPos[footIdx].x, currFootPos.z - mFeetStartPos[footIdx].z);
-
-        if (!isStop)
-        {
-            //Get the difference of the foot's distance from the initial position
-            float diffDist = sqrt(dot(diff, diff));
-            //Calculate the step distance to be taken
-            float stepDist = mHalfStepDist + diffDist;
-
-            //Calculate the position offset for the next step
-            mFeetOffsetPos[footIdx] = vec3(cos(dir) * stepDist, 0, sin(dir) * stepDist);
-        }
-        else
-            //Set the foot position offset so that it moves back to the initial position
-            mFeetOffsetPos[footIdx] = vec3(-diff.x, 0, -diff.y);
-    }
-    else if (moveType == MOVETYPE::ROTATE)
-    {
-        //Calculate the difference of the current foot angle to the initial foot angle
-        float currAngle = atan2(currFootPos.z - mBody.mLocalPosZ, currFootPos.x - mBody.mLocalPosX);
-        float diffAngle = getSmallestAngle(currAngle - mFeetStartRot[footIdx]);
-
-        if (!isStop)
-            //Set the foot rotation offset
-            mFeetOffsetRot[footIdx] = mHalfStepAngle * dir - diffAngle;
-        else
-            //Set the foot rotation offset so that it moves back to the initial rotation
-            mFeetOffsetRot[footIdx] = -diffAngle;
-
-        mFeetStepStartRot[footIdx] = currAngle;
-    }
+    if (!isStop)
+        mStepOffsetPos[footIdx] = vec3(offsetX, 0, offsetZ);
+    else
+        mStepOffsetPos[footIdx] = vec3(-footDiff.x, 0, -footDiff.z);
 
     //Set the next step start position to the current foot position
-    mFeetStepStartPos[footIdx] = currFootPos;
+    mStepStartPos[footIdx] = currFootPos;
+
+    if (mStepStartTimes[footIdx] != startTime)
+        mStepStartTimes[footIdx] = startTime;
 }
 
-void Hexapod::setFeetToCurrPos()
+void Hexapod::changeDir(double dir, float grpSize, int startTime)
 {
-    //Set the feet to the current positions
-    for (int i = 0; i < mLegs.size(); i++)
+    if (!mCrabMode)
     {
-        Leg3D *leg = mLegs[i];
+        mChangeOffsetDir = getSmallestAngle(dir - mCurrDir);
 
-        leg->setFootTargetPos(vec3(mFeetCurrPosX[i], mFeetCurrPosY[i], mFeetCurrPosZ[i]));
+        mChangeStartDir = mCurrDir;
+        mChangDirStartTime = startTime;
+    }
+    else
+        mCurrDir = dir;
+}
+
+void Hexapod::orientBody()
+{
+    float timeLapsedRatio = getTimeLapsedRatio(mChangDirStartTime, mStepDuration);
+
+    if (timeLapsedRatio >= 0 && timeLapsedRatio <= 1)
+    {
+        float newDir = mChangeStartDir + mChangeOffsetDir * timeLapsedRatio;
+
+        mCurrDir = newDir;
+        mBody.mYaw = toDegrees(-getSmallestAngle(mCurrDir - mStartDir));
     }
 }
 
@@ -453,42 +366,16 @@ void Hexapod::centerBody()
 {
     std::vector<vec2> currFeetPolygon;
     for (int i = 0; i < LEG_COUNT; i++)
-        currFeetPolygon.push_back(vec2(mFeetCurrPosX[i], mFeetCurrPosZ[i]));
+        currFeetPolygon.push_back(vec2(mLegs[i]->mTargetFootPosX, mLegs[i]->mTargetFootPosZ));
 
     //Get the center of mass
     vec2 centroid = getCentroid(currFeetPolygon);
 
-    //Change the feet position so that the body is centered
-    for (int legIdx = 0; legIdx < LEG_COUNT; legIdx++)
-    {
-        mFeetCurrPosX[legIdx] -= centroid.x - mBody.mBasePos.x;
-        mFeetCurrPosZ[legIdx] -= centroid.y - mBody.mBasePos.z;
-    }
+    mBody.mLocalPosX = centroid.x;
+    mBody.mLocalPosZ = centroid.y;
 }
 
-void Hexapod::orientToFront()
+vec3 Hexapod::getPos()
 {
-    if (mRotatedLegs.size() <= 0)
-        return;
-
-    //Divider to divide the delta angle among the non-rotating/pushing feet
-    int divider = LEG_COUNT / mRotatedLegs.size() - 1;
-
-    for (int footIdx = 0; footIdx < LEG_COUNT; footIdx++)
-    {
-        //Skip the feet that are currently taking a step
-        if (std::count(mRotatedLegs.begin(), mRotatedLegs.end(), footIdx))
-            continue;
-
-        //Calculate the new angle by adding the current angle with the delta angle of the current frame and the previous frame
-        float currAngle = atan2(mFeetCurrPosZ[footIdx], mFeetCurrPosX[footIdx]);
-        float newAngle = currAngle - mDeltaAngle / divider;
-
-        //Set the new foot position
-        float footRadius = mFeetRadius[footIdx];
-        vec3 newPos = vec3(cos(newAngle) * footRadius, mFeetCurrPosY[footIdx], sin(newAngle) * footRadius);
-
-        mFeetCurrPosX[footIdx] = newPos.x;
-        mFeetCurrPosZ[footIdx] = newPos.z;
-    }
+    return mBody.mLocalPos;
 }

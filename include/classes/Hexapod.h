@@ -22,11 +22,9 @@ public:
     void update();
     void draw();
     void setWalkProperties(float walkSpeed, float stepHeight, float stepDist);
-    void setFootTarget(int footIdx, vec3 footPos);
-    void setNextStep(int footIdx, double dir, int startTime, bool isStop = false);
-    void updateNextStep(int footIdx, double dir, bool isStop = false);
-    void centerBody();
-    void orientToFront();
+    void setNextStep(int footIdx, int startTime, bool isStop = false);
+    void changeDir(double dir, float grpSize, int startTime);
+    vec3 getPos();
     void drawCoord();
 
     int mStepDuration;
@@ -36,47 +34,38 @@ private:
 
     std::vector<Leg3D *> mLegs;
 
-    bool mCrabMode = true;
+    bool mCrabMode = false;
 
-    float mBodyRoll;
-    float mBodyYaw;
-    float mBodyPitch;
+    float mStartDir = FORWARD;
+    float mCurrDir = FORWARD;
+    float mChangeStartDir;
+    float mChangeOffsetDir;
+    float mChangDirStartTime;
 
-    float mFeetCurrPosX[LEG_COUNT];
-    float mFeetCurrPosY[LEG_COUNT];
-    float mFeetCurrPosZ[LEG_COUNT];
+    vec3 mStepStartPos[LEG_COUNT];
+    float mStepFootAngle[LEG_COUNT];
+    vec3 mStepOffsetPos[LEG_COUNT];
+    int mStepStartTimes[LEG_COUNT];
 
-    vec3 mFeetStartPos[LEG_COUNT];
-    float mFeetStartRot[LEG_COUNT];
-    vec3 mFeetStepStartPos[LEG_COUNT];
-    float mFeetStepStartRot[LEG_COUNT];
-    vec3 mFeetOffsetPos[LEG_COUNT];
-    float mFeetOffsetRot[LEG_COUNT];
-
-    float mFeetRadius[LEG_COUNT];
-
-    std::vector<int> mRotatedLegs;
-    float mDeltaAngle;
-
-    int mComboGaitType = GAITTYPE::TRIPOD;    
+    int mComboGaitType = GAITTYPE::TRIPOD;
 
     GaitManager *mGaitManager;
 
     //Walk properties
-    const int BASE_STEP_DURATION = 1000; //Each step takes 800ms to complete
+    const int BASE_STEP_DURATION = 500;       //Duration in ms that each step takes to complete
+    const float BASE_MAXROT_ANGLE = M_PI / 4; //Maximum angle of rotation per step
 
     float mWalkSpeed = 1.0;
-    float mStepHeight = 1.0;    
-    float mStepDist = 2.0;    
-    float mHalfStepDist = 1;
-    float mHalfStepAngle = M_PI/18; //Rotates 10 degrees
+    float mStepHeight = 1.0;
+    float mStepDist = 1;    
 
-    std::vector<int> mStepStartTimes;
-    
-
-    void createWalkAnimations();
+    void walk(float walkDir);
+    void centerBody();
+    void orientToFront();
     void resetFeetPos();
     void resetBodyPos();
+    void resetBodyRot();
     void stepTowardsTarget();
+    void orientBody();
     void setFeetToCurrPos();
 };

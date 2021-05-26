@@ -25,12 +25,13 @@ void GaitManager::initGaits()
 
     mGaits[GAITTYPE::RIPPLE].setTimeOffset(-mTarget->mStepDuration / 2);
 
+    int triplePauseDuration = (7 / 20) * mTarget->mStepDuration;
     mGaits[GAITTYPE::TRIPLE].setGroups({GaitGroup({LEG::FRONTLEFT}),
                                         GaitGroup({LEG::MIDRIGHT}),
-                                        GaitGroup({LEG::BACKLEFT}, 350),
+                                        GaitGroup({LEG::BACKLEFT}, triplePauseDuration),
                                         GaitGroup({LEG::FRONTRIGHT}),
                                         GaitGroup({LEG::MIDLEFT}),
-                                        GaitGroup({LEG::BACKRIGHT}, 350)});
+                                        GaitGroup({LEG::BACKRIGHT}, triplePauseDuration)});
 
     mGaits[GAITTYPE::TRIPLE].setTimeOffset(-mTarget->mStepDuration / 1.5);
 
@@ -44,12 +45,12 @@ void GaitManager::initGaits()
     mGaits[GAITTYPE::WAVE].setTimeOffset(-mTarget->mStepDuration / 2);
 }
 
-void GaitManager::startGait(MOVETYPE moveType, GAITTYPE gaitType)
+void GaitManager::startGait(MOVESTATE moveType, GAITTYPE gaitType)
 {
     if (_isStopping)
         return;
 
-    mMoveType = moveType;
+    mMoveState = moveType;
 
     setGaitType(gaitType);
 
@@ -57,17 +58,11 @@ void GaitManager::startGait(MOVETYPE moveType, GAITTYPE gaitType)
 
     for (int grpIdx = 0; grpIdx < mCurrGait.getGroupSize(); grpIdx++)
     {
-        //Set the walk/rotate directions
-        if (mMoveType == MOVETYPE::WALK)
-            mGroupMoveDir[grpIdx] = mWalkDir;
-        else if (mMoveType == MOVETYPE::ROTATE)
-            mGroupMoveDir[grpIdx] = mRotateDir;
-
         //Initialize the steps
         GaitGroup *currGroup = mCurrGait.getGroup(grpIdx);
         std::vector<LEG> legIndices = currGroup->getLegIndices();
         for (int footIdx = 0; footIdx < legIndices.size(); footIdx++)
-            mTarget->setNextStep(legIndices[footIdx], mGroupMoveDir[grpIdx], currGroup->getStartTime());
+            mTarget->setNextStep(legIndices[footIdx], currGroup->getStartTime());
     }
 }
 
@@ -85,14 +80,7 @@ void GaitManager::runGait(vec3 dir)
         std::vector<LEG> currFeet = currGroup->getLegIndices();
 
         GAITGROUPSTATE currGroupState = mGroupState[grpIdx];
-
-        if (timeLapsedRatio < 0)
-        {
-            //Updates the feet positions and states while it is not taking a step
-            for (int i = 0; i < currFeet.size(); i++)
-                mTarget->updateNextStep(currFeet[i], mGroupMoveDir[grpIdx], currGroupState != GAITGROUPSTATE::MOVING);
-        }
-        else if (timeLapsedRatio >= 1)
+        if (timeLapsedRatio >= 1)
         {
             if (currGroupState == GAITGROUPSTATE::MOVING)
             {
@@ -100,9 +88,8 @@ void GaitManager::runGait(vec3 dir)
                 GaitGroup *prevGroup = mCurrGait.getGroup(grpIdx > 0 ? grpIdx - 1 : mCurrGaitGroupSize - 1);
                 currGroup->setStartTime(prevGroup->getStartTime() + prevGroup->getPauseDuration(), mTarget->mStepDuration, mCurrGait.getTimeOffset());
 
-                //Pass the start time to the hexapod's feet
-                for (int footIdx = 0; footIdx < currFeet.size(); footIdx++)
-                    mTarget->setNextStep(currFeet[footIdx], mGroupMoveDir[grpIdx], currGroup->getStartTime());
+                if (_isStopping && mGroupState[grpIdx] != GAITGROUPSTATE::STOPPING)
+                    mGroupState[grpIdx] = GAITGROUPSTATE::STOPPING;
             }
             else if (currGroupState == GAITGROUPSTATE::STOPPING)
             {
@@ -113,17 +100,16 @@ void GaitManager::runGait(vec3 dir)
                 //If all groups were stopped, then set the move type to idle
                 if (mStoppedGroupCount >= mCurrGaitGroupSize)
                 {
-                    mMoveType = MOVETYPE::IDLE;
+                    mMoveState = MOVESTATE::IDLE;
                     _isStopping = false;
                 }
             }
-            else if (currGroupState == GAITGROUPSTATE::CHANGEDIR)
+
+            if (timeLapsedRatio < 0 || timeLapsedRatio >= 1)
             {
-                mGroupState[grpIdx] = GAITGROUPSTATE::MOVING;
-                if (mMoveType == MOVETYPE::WALK)
-                    mGroupMoveDir[grpIdx] = mWalkDir;
-                else if (mMoveType == MOVETYPE::ROTATE)
-                    mGroupMoveDir[grpIdx] = mRotateDir;
+                //Pass the start time to the hexapod's feet
+                for (int footIdx = 0; footIdx < currFeet.size(); footIdx++)
+                    mTarget->setNextStep(currFeet[footIdx], currGroup->getStartTime(), _isStopping);
             }
         }
     }
@@ -131,12 +117,10 @@ void GaitManager::runGait(vec3 dir)
 
 void GaitManager::stopGait()
 {
-    if (_isStopping)
+    if (_isStopping || mMoveState == MOVESTATE::IDLE)
         return;
 
     _isStopping = true;
-
-    changeAllGroupState(GAITGROUPSTATE::STOPPING);
 
     mStoppedGroupCount = 0;
 }
@@ -164,20 +148,14 @@ void GaitManager::setWalkDir(float walkDir)
     if (!compareFloats(mWalkDir, walkDir))
     {
         mWalkDir = walkDir;
-        for (int i = 0; i < mGroupState.size(); i++)
-            mGroupState[i] = GAITGROUPSTATE::CHANGEDIR;
+        mTarget->changeDir(walkDir, mCurrGaitGroupSize, getCurrTime());
     }
 }
 
 void GaitManager::setRotateDir(ROTATEDIR rotateDir)
 {
     if (mRotateDir != rotateDir)
-    {
         mRotateDir = rotateDir;
-
-        for (int i = 0; i < mGroupState.size(); i++)
-            mGroupState[i] = GAITGROUPSTATE::CHANGEDIR;
-    }    
 }
 
 ROTATEDIR GaitManager::getRotateDir()
@@ -191,24 +169,19 @@ void GaitManager::changeAllGroupState(GAITGROUPSTATE groupState)
         mGroupState[i] = groupState;
 }
 
-MOVETYPE GaitManager::getMoveType()
+MOVESTATE GaitManager::getMoveState()
 {
-    return mMoveType;
+    return mMoveState;
 }
 
 bool GaitManager::isWalking()
 {
-    return mMoveType == MOVETYPE::WALK;
-}
-
-bool GaitManager::isRotating()
-{
-    return mMoveType == MOVETYPE::ROTATE;
+    return mMoveState == MOVESTATE::WALK;
 }
 
 bool GaitManager::isMoving()
 {
-    return mMoveType != MOVETYPE::IDLE;
+    return mMoveState != MOVESTATE::IDLE;
 }
 
 bool GaitManager::isStopping()

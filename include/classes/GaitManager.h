@@ -16,7 +16,7 @@ class GaitManager
 public:
     GaitManager(Hexapod *target);
     void initGaits();
-    void startGait(MOVETYPE moveType, GAITTYPE gaitType = GAITTYPE::TRIPOD);
+    void startGait(MOVESTATE moveType, GAITTYPE gaitType = GAITTYPE::TRIPOD);
     void runGait(vec3 dir = vec3(0));
     void stopGait();
     GAITTYPE getGaitType();
@@ -24,9 +24,8 @@ public:
     void setWalkDir(float walkDir);
     void setRotateDir(ROTATEDIR rotateDir);
     ROTATEDIR getRotateDir();    
-    MOVETYPE getMoveType();
+    MOVESTATE getMoveState();
     bool isWalking();
-    bool isRotating();
     bool isMoving();
     bool isStopping();
 
@@ -37,7 +36,7 @@ private:
     Gait mCurrGait;
     int mCurrGaitGroupSize;    
 
-    MOVETYPE mMoveType = MOVETYPE::IDLE;
+    MOVESTATE mMoveState = MOVESTATE::IDLE;
     ROTATEDIR mRotateDir = ROTATEDIR::COUNTERCLOCKWISE;
 
     float mWalkDir = M_PI / 2;    

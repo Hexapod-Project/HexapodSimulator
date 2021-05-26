@@ -43,14 +43,6 @@ Body::Body(float thickness, float width, float length)
     mBodyMatrix = scale(vec3(1) + BODY_FORWARD_DIR * scaleRatio);
 }
 
-void Body::updateMatrix()
-{
-    mLocalRot = vec3(toRadians(mPitch), toRadians(mYaw), toRadians(mRoll));
-    mLocalPos = vec3(mLocalPosX, mLocalPosY, mLocalPosZ);
-
-    Node3D::updateMatrix();
-}
-
 void Body::update()
 {
     updateMatrix();

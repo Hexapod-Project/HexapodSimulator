@@ -17,12 +17,7 @@ void Scene3DLegIK::setup()
 
     mWorldAxisMatrix = mat4(1.0f);
     mWorldAxisViewportSize = vec2(getWindowWidth() / 5, getWindowHeight() / 5);
-    mWorldAxisViewportPos = vec2(getWindowWidth() - mWorldAxisViewportSize.x, 0);
-
-    vec3 footWorldPos = mLeg.getFootWorldPos();
-    mFootX = footWorldPos.x;
-    mFootY = footWorldPos.y;
-    mFootZ = footWorldPos.z;
+    mWorldAxisViewportPos = vec2(getWindowWidth() - mWorldAxisViewportSize.x, 0);    
 
     drawTexts();
 
@@ -39,32 +34,32 @@ void Scene3DLegIK::drawGUI()
 
     ImGui::Text("Parent Position");
     ImGui::Columns(3);
-    ImGui::DragFloat("pX", &mBodyX, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("pX", &mBody.mLocalPosX, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
     ImGui::NextColumn();
-    ImGui::DragFloat("pY", &mBodyY, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("pY", &mBody.mLocalPosY, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
     ImGui::NextColumn();
-    ImGui::DragFloat("pZ", &mBodyZ, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("pZ", &mBody.mLocalPosZ, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
 
     ImGui::Columns(1);
 
     ImGui::Text("Parent Rotation");
     ImGui::Columns(3);
-    ImGui::DragFloat("Roll", &mBodyRoll, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("Roll", &mBody.mRoll, 0.5, -360, 360, "%.1f");
     ImGui::NextColumn();
-    ImGui::DragFloat("Yaw", &mBodyYaw, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("Yaw", &mBody.mYaw, 0.5, -360, 360, "%.1f");
     ImGui::NextColumn();
-    ImGui::DragFloat("Pitch", &mBodyPitch, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("Pitch", &mBody.mPitch, 0.5, -360, 360, "%.1f");
 
     ImGui::Columns(1);
     
     ImGui::Separator();
     ImGui::Text("Foot Position");
     ImGui::Columns(3);
-    ImGui::DragFloat("ftX", &mFootX, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("ftX", &mLeg.mTargetFootPosX, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
     ImGui::NextColumn();
-    ImGui::DragFloat("ftY", &mFootY, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("ftY", &mLeg.mTargetFootPosY, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
     ImGui::NextColumn();
-    ImGui::DragFloat("ftZ", &mFootZ, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
+    ImGui::DragFloat("ftZ", &mLeg.mTargetFootPosZ, 0.1, -FLT_MAX, FLT_MAX, "%.2f");
 
     ImGui::End();
 }
@@ -72,12 +67,9 @@ void Scene3DLegIK::drawGUI()
 void Scene3DLegIK::update()
 {
     mWorldAxisMatrix = translate(mCamera.getEyePoint()) * toMat4(mCamera.getOrientation()) * translate(vec3(0, 0, -5)) / toMat4(mCamera.getOrientation());
-
-    mBody.mLocalPos = vec3(mBodyX, mBodyY, mBodyZ);
-    mBody.mLocalRot = vec3(toRadians(mBodyRoll), toRadians(mBodyYaw), toRadians(mBodyPitch));
+    
     mBody.updateMatrix();
-
-    mLeg.setFootTargetPos(vec3(mFootX, mFootY, mFootZ));
+    
     mLeg.update();
 
     mHipAngle = mLeg.getHipAngle();

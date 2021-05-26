@@ -27,9 +27,8 @@ enum GAITTYPE
     WAVE
 };
 
-enum MOVETYPE {
-    WALK,
-    ROTATE,      
+enum MOVESTATE {
+    WALK,     
     IDLE
 };
 
@@ -41,6 +40,5 @@ enum ROTATEDIR {
 enum GAITGROUPSTATE {
     MOVING,    
     STOPPING,
-    STOPPED,
-    CHANGEDIR
+    STOPPED
 };

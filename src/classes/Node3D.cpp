@@ -4,7 +4,7 @@
 void Node3D::setBase(vec3 pos, vec3 rot)
 {
     mBasePos = pos;
-    mBaseRot = rot;
+    mBaseRot = rot;    
 
     mBaseMatrix = translate(mBasePos) * toMat4(quat(mBaseRot));
     mLocalMatrix = mBaseMatrix;
@@ -13,6 +13,9 @@ void Node3D::setBase(vec3 pos, vec3 rot)
 
 void Node3D::updateMatrix()
 {
+    mLocalRot = vec3(toRadians(mPitch), toRadians(mYaw), toRadians(mRoll));
+    mLocalPos = vec3(mLocalPosX, mLocalPosY, mLocalPosZ);
+
     mLocalMatrix = mBaseMatrix;
 
     mLocalMatrix *= translate(mLocalPos) * toMat4(quat(mLocalRot));

@@ -32,6 +32,14 @@ public:
     vec3 mLocalRot;
     vec3 mLocalPos;
 
+    //These are mainly used by the ImGui to update the vectors
+    float mRoll = 0;
+    float mYaw = 0;
+    float mPitch = 0;
+    float mLocalPosX = 0;
+    float mLocalPosY = 0;
+    float mLocalPosZ = 0;
+
     //The base matrix defines the initial matrix of the Servo
     //This will be used to reset the local matrix to the initial transformation before calculating the changes
     mat4 mBaseMatrix;

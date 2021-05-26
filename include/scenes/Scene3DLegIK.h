@@ -35,16 +35,4 @@ private:
     float mHipAngle;
     float mFemurAngle;
     float mTibiaAngle;
-
-    float mFootX;
-    float mFootY;
-    float mFootZ;
-
-    float mBodyX;
-    float mBodyY;
-    float mBodyZ;
-
-    float mBodyRoll;
-    float mBodyYaw;
-    float mBodyPitch;
 };

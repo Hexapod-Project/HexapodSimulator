@@ -1,13 +1,13 @@
 #include "SceneHexapod.h"
 #include "Tools.h"
+#include "cinder/CinderImGui.h"
 
 void SceneHexapod::setup()
-{
-    mCam.lookAt(vec3(0, 15, 20), vec3(0));
-    mCam.setPerspective(40.0, getWindowAspectRatio(), 0.01, 100.0);
+{    
+    mCam.setPerspective(40.0, getWindowAspectRatio(), 0.01, 200.0);
     mCamUi = CameraUi(&mCam, getWindow());
 
-    mWirePlane = gl::Batch::create(geom::WirePlane().size(vec2(1000)).subdivisions(vec2(1000)), gl::getStockShader(gl::ShaderDef().color()));
+    mWirePlane = gl::Batch::create(geom::WirePlane().size(vec2(2000)).subdivisions(vec2(2000)), gl::getStockShader(gl::ShaderDef().color()));
     mFloor = gl::Batch::create(geom::Plane().size(vec2(1000)).subdivisions(vec2(1000)), gl::getStockShader(gl::ShaderDef().color()));
 
     mWorldAxisMatrix = mat4(1.0f);
@@ -16,14 +16,59 @@ void SceneHexapod::setup()
 
     mHexapod.setup();
 
+    mCam.lookAt(mHexapod.getPos() + mCamOffset, mHexapod.getPos());
+
+    //createShadowMap();
+
     drawTexts();
+
+    ImGui::Initialize();
+}
+
+//In progress
+void SceneHexapod::createShadowMap()
+{
+    //Create framebuffer object
+    glGenFramebuffers(1, &mDepthMapFBO);
+
+    //Create 2D texture for the framebuffer's depth buffer
+    glGenTextures(1, &mDepthMap);
+    glBindTexture(GL_TEXTURE_2D, mDepthMap);
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, SHADOW_WIDTH, SHADOW_HEIGHT, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
+
+    //Attach created texture to the framebuffer's depth buffer
+    glBindFramebuffer(GL_FRAMEBUFFER, mDepthMapFBO);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, mDepthMap, 0);
+    glDrawBuffer(GL_NONE);
+    glReadBuffer(GL_NONE);
+    glBindFramebuffer(GL_FRAMEBUFFER, 0);
 }
 
 void SceneHexapod::update()
 {
-    mWorldAxisMatrix = translate(mCam.getEyePoint()) * toMat4(mCam.getOrientation()) * translate(vec3(0, 0, -5)) / toMat4(mCam.getOrientation());
+    drawGUI();
+
+    mWorldAxisMatrix = translate(mCam.getEyePoint()) * toMat4(mCam.getOrientation()) * translate(vec3(0, 0, -5)) / toMat4(mCam.getOrientation());    
 
     mHexapod.update();
+
+    if(mFollowHexapod)
+        mCam.lookAt(mHexapod.getPos() + mCamOffset, mHexapod.getPos());
+    else
+        mCamOffset = mCam.getEyePoint() - mHexapod.getPos();
+}
+
+void SceneHexapod::drawGUI()
+{
+    ImGui::Begin("Scene Properties");
+
+    ImGui::Checkbox("Camera Follows Hexapod", &mFollowHexapod);
+
+    ImGui::End();
 }
 
 void SceneHexapod::draw()

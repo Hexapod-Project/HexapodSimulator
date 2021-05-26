@@ -29,4 +29,16 @@ private:
     mat4 mWorldAxisMatrix;
     vec2 mWorldAxisViewportPos;
     vec2 mWorldAxisViewportSize;
+
+    bool mFollowHexapod = false;
+    vec3 mCamOffset = vec3(0, 15, -20);
+
+    //Shadow mapping variables
+    unsigned int mDepthMapFBO;
+    const unsigned int SHADOW_WIDTH = 1024;    
+    const unsigned int SHADOW_HEIGHT = 1024;
+    unsigned int mDepthMap;
+
+    void createShadowMap();
+    void drawGUI();
 };

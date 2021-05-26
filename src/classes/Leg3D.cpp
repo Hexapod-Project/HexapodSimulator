@@ -43,7 +43,7 @@ Leg3D::Leg3D(vec3 pos, float hipLength, float femurLength, float tibiaLength, bo
     //Foot
     mFoot = Foot(DEFAULT_LEG_DIR);
     mFoot.setBase(DEFAULT_LEG_DIR * tibiaLength, vec3(0));
-    mFoot.setColor(Color(1, 1, 0));
+    mFoot.setColor(Color(1, 1, 0));    
 
     mTargetFootPosMesh = gl::Batch::create(geom::WireCube().size(vec3(0.15)), gl::getStockShader(gl::ShaderDef().color()));
 }
@@ -56,7 +56,7 @@ void Leg3D::setup()
     mFemurServo.addChild(&mTibiaServo);
     mTibiaServo.addChild(&mFoot);
 
-    setFootTargetPos(getFootWorldPos());
+    setFootTargetPos(mFoot.getLocalPos());
 }
 
 float Leg3D::getHipAngle()
@@ -74,13 +74,18 @@ float Leg3D::getTibiaAngle()
     return mTibiaServo.getServoAngle();
 }
 
-void Leg3D::setFootTargetPos(vec3 targetWorldPos)
+void Leg3D::setFootTargetPos(vec3 targetPos)
 {
-    mTargetFootPos = targetWorldPos;
-    mTargetFootPosMatrix = translate(mTargetFootPos);
+    mTargetFootPosX = targetPos.x;
+    mTargetFootPosY = targetPos.y;
+    mTargetFootPosZ = targetPos.z;
 }
 
-//This returns the world position relative to the leg's transformations and not the actual world transformation
+void Leg3D::resetFootTargetPos()
+{
+    setFootTargetPos(mFootStartPos);
+}
+
 vec3 Leg3D::getFootWorldPos()
 {
     return mFoot.getWorldPos();
@@ -185,9 +190,12 @@ void Leg3D::calculateIK()
 
 void Leg3D::update()
 {
+    mTargetFootPos = vec3(mTargetFootPosX, mTargetFootPosY, mTargetFootPosZ);
+    mTargetFootPosMatrix = translate(mTargetFootPos);    
+
     updateMatrix();
     mHipServo.updateMatrix();
-    mFemurServo.updateMatrix();
+    mFemurServo.updateMatrix();    
 
     //Somehow running this here has the least jittering from the slow update
     //Probably need a faster algorithm for calculating the IK
