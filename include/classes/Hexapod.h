@@ -31,6 +31,7 @@ private:
 
     std::vector<Leg3D *> mLegs;
 
+    bool mCrabModeCheckbox = true;
     bool mCrabMode = true;
 
     float mStartDir = FORWARD;

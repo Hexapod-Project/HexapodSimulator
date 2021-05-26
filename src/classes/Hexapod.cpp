@@ -131,7 +131,7 @@ void Hexapod::drawGUI()
     ImGui::Combo("Gait", &mComboGaitType, std::vector<std::string>{"Tripod", "Ripple", "Triple", "Wave"});
 
     ImGui::NextColumn();
-    ImGui::Checkbox("Crab Mode", &mCrabMode);
+    ImGui::Checkbox("Crab Mode", &mCrabModeCheckbox);
 
     ImGui::NextColumn();
     if (ImGui::Button("Reset"))
@@ -146,6 +146,16 @@ void Hexapod::drawGUI()
     ImGui::Text("Walk Directions");
 
     ImGui::Columns(3);
+    float moveDir = toDegrees(mMoveDir);
+    ImGui::InputFloat("Move", &moveDir);
+    ImGui::NextColumn();
+    float faceDir = toDegrees(mFaceDir);
+    ImGui::InputFloat("Face", &faceDir);
+    ImGui::NextColumn();
+    float targetDir = toDegrees(mTargetDir);
+    ImGui::InputFloat("Target", &targetDir);
+    ImGui::NextColumn();
+
     if (ImGui::Button("Left Forward", BTN_SIZE))
         walk(LEFT_FORWARD);
 
@@ -207,6 +217,8 @@ void Hexapod::resetBodyRot()
     mBody.mYaw = 0;
     mBody.mPitch = 0;
     mMoveDir = mStartDir;
+    mTargetDir = mStartDir;
+    mFaceDir = mStartDir;
 }
 
 void Hexapod::update()
@@ -259,19 +271,27 @@ void Hexapod::setWalkProperties(float stepHeight, float stepDist)
 
 void Hexapod::walk(float walkDir)
 {
-    if (!compareFloats(mTargetDir, walkDir))
-        mGaitManager->setWalkDir(walkDir);
+    if (mGaitManager->isStopping())
+        return;
 
     if (!mGaitManager->isMoving())
     {
+        mCrabMode = mCrabModeCheckbox;
+
+        if (!mCrabMode)
+            mTargetDir = mFaceDir;
+
         for (int i = 0; i < LEG_COUNT; i++)
         {
             mStepStartPos[i] = mLegs[i]->mTargetFootPos;
             mStepOffsetPos[i] = vec3(0);
         }
 
+        mGaitManager->setWalkDir(walkDir);
         mGaitManager->startGait(MOVESTATE::WALK, (GAITTYPE)mComboGaitType);
     }
+    else if (!compareFloats(mTargetDir, walkDir))
+        mGaitManager->setWalkDir(walkDir);
 }
 
 void Hexapod::stepTowardsTarget()
