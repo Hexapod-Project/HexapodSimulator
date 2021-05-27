@@ -4,7 +4,7 @@ A simulation created to test the algorithms for the hexapod's motions and invers
 
 Disclaimer: This is mainly for experimental purposes, there may be a lot of undiscovered bugs but the algorithms are usable nonetheless.
 
-#### Features:
+#### Added Behaviours:
 <ol>
     <li>Move if any directions based on the directional angles.</li>
     <li>Turns and walk towards specified direction.</li>
