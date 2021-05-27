@@ -6,7 +6,7 @@ Disclaimer: This is mainly for experimental purposes, there may be a lot of undi
 
 #### Added Behaviours:
 <ol>
-    <li>Move if any directions based on the directional angles.</li>
+    <li>Move in any directions based on the directional angles.</li>
     <li>Turns and walk towards specified direction.</li>
     <li>Rotates in-place towards given directional angles.</li>
 </ol>
