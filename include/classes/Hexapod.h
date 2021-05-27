@@ -28,6 +28,9 @@ public:
     void drawCoord();
 private:
     Body mBody;
+    
+    MOVETYPE mMoveTypeBtn = MOVETYPE::WALK;
+    MOVETYPE mMoveType = MOVETYPE::WALK;
 
     std::vector<Leg3D *> mLegs;
 
@@ -58,7 +61,8 @@ private:
     float mStepHeight = 1.0;
     float mStepDist = 2;    
 
-    void walk(float walkDir);
+    void move(float walkDir);
+    void stop();
     void centerBody();
     void orientToFront();
     void resetFeetPos();

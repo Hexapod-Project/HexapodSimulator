@@ -16,9 +16,10 @@ class GaitManager
 public:
     GaitManager(Hexapod *target);
     void initGaits();
-    void startGait(MOVESTATE moveType, GAITTYPE gaitType = GAITTYPE::TRIPOD);
+    void startGait(GAITTYPE gaitType = GAITTYPE::TRIPOD);
     void runGait(vec3 dir = vec3(0));
     void stopGait();
+    void stopGaitImmediate();
     GAITTYPE getGaitType();
     void setGaitType(GAITTYPE gaitType, GAITGROUPSTATE groupState = GAITGROUPSTATE::MOVING);
     void setWalkDir(float walkDir);

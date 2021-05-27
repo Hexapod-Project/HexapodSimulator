@@ -47,12 +47,12 @@ void GaitManager::initGaits()
                                       GaitGroup({LEG::BACKRIGHT})});
 }
 
-void GaitManager::startGait(MOVESTATE moveType, GAITTYPE gaitType)
+void GaitManager::startGait(GAITTYPE gaitType)
 {
     if (_isStopping)
         return;
 
-    mMoveState = moveType;
+    mMoveState = MOVESTATE::MOVE;
 
     setGaitType(gaitType);
 
@@ -127,6 +127,12 @@ void GaitManager::stopGait()
     mStoppedGroupCount = 0;
 }
 
+void GaitManager::stopGaitImmediate()
+{
+    mMoveState = MOVESTATE::IDLE;
+    _isStopping = false;
+}
+
 GAITTYPE GaitManager::getGaitType()
 {
     return mCurrGaitType;
@@ -175,7 +181,7 @@ MOVESTATE GaitManager::getMoveState()
 
 bool GaitManager::isWalking()
 {
-    return mMoveState == MOVESTATE::WALK;
+    return mMoveState == MOVESTATE::MOVE;
 }
 
 bool GaitManager::isMoving()

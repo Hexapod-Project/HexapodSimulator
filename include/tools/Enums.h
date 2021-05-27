@@ -28,8 +28,13 @@ enum GAITTYPE
 };
 
 enum MOVESTATE {
-    WALK,     
+    MOVE,      
     IDLE
+};
+
+enum MOVETYPE {
+    WALK,
+    ROTATE
 };
 
 enum ROTATEDIR {
