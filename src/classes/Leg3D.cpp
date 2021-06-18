@@ -135,7 +135,7 @@ void Leg3D::calculateIK()
      * If Z = 0 and X distance is negative then it is invalid OR if X = 0 and Z distance is negative then it is invalid
     */
     vec3 diffVerification = glm::abs(localTargetFootPos) - glm::abs(localFemurServoPos);
-    if (!(diffVerification.x < 0 && abs(diffVerification.z) <= 0.00001 || diffVerification.z < 0 && abs(diffVerification.x) <= 0.00001))
+    if (!(diffVerification.x < 0 && fabs(diffVerification.z) <= 0.00001 || diffVerification.z < 0 && fabs(diffVerification.x) <= 0.00001))
     {
         //Calculate the distance between the target foot pos and femur servo
         vec3 diff = localTargetFootPos - localFemurServoPos;

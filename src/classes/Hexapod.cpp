@@ -319,10 +319,6 @@ void Hexapod::stop()
 
 void Hexapod::stepTowardsTarget()
 {
-    MOVESTATE moveType = mGaitManager->getMoveState();
-
-    float newDir = mMoveDir;
-
     for (int footIdx = 0; footIdx < mLegs.size(); footIdx++)
     {
         float timeLapsedRatio = getTimeLapsedRatio(mStepStartTimes[footIdx], mGaitManager->getStepDuration());

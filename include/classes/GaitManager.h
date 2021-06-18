@@ -53,8 +53,6 @@ private:
     std::vector<Gait> mGaits;
 
     void restartGait();
-    void setFeetBaseRot();
-    void setFeetRadius();
     void changeAllGroupState(GAITGROUPSTATE groupState);
 
     int mCurrGroupIdx = 0;

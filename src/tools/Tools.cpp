@@ -74,9 +74,9 @@ double toPositiveAngle(double angle)
 double getSmallestAngle(double angle)
 {
     if(angle > M_PI)
-        angle = angle - M_PI * 2;
+        angle -= M_PI * 2;
     else if (angle < -M_PI)
-        angle = angle + M_PI * 2;
+        angle += M_PI * 2;
 
     return angle;
 }
