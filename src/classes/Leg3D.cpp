@@ -1,5 +1,6 @@
 #include "Leg3D.h"
 #include "Tools.h"
+#include "HexapodConstants.h"
 
 vec3 DEFAULT_LEG_DIR = vec3(1, 0, 0);
 Leg3D::Leg3D()
@@ -45,7 +46,7 @@ Leg3D::Leg3D(vec3 pos, float hipLength, float femurLength, float tibiaLength, bo
     mFoot.setBase(DEFAULT_LEG_DIR * tibiaLength, vec3(0));
     mFoot.setColor(Color(1, 1, 0));    
 
-    mTargetFootPosMesh = gl::Batch::create(geom::WireCube().size(vec3(0.15)), gl::getStockShader(gl::ShaderDef().color()));
+    mTargetFootPosMesh = gl::Batch::create(geom::WireCube().size(vec3(HexapodConstants::AXIS_RADIUS/2)), gl::getStockShader(gl::ShaderDef().color()));
 }
 
 void Leg3D::setup()

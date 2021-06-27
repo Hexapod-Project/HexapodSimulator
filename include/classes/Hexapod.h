@@ -4,8 +4,6 @@
 #include "cinder/CinderImGui.h"
 #include "Leg3D.h"
 #include "Body.h"
-#include "Animator.h"
-#include "GaitManager.h"
 #include "Enums.h"
 #include "HexapodConstants.h"
 
@@ -21,48 +19,54 @@ public:
     void setup();
     void update();
     void draw();
-    void setWalkProperties(float stepHeight, float stepDist);
-    void setNextStep(int footIdx, int startTime, bool isStop = false);
     void changeDir(double dir, float grpSize, int startTime);
     vec3 getPos();
     void drawCoord();
+
 private:
     Body mBody;
-    
+
     MOVETYPE mMoveTypeBtn = MOVETYPE::WALK;
     MOVETYPE mMoveType = MOVETYPE::WALK;
 
+    MOVESTATE mMoveState = MOVESTATE::STOPPED;
+
     std::vector<Leg3D *> mLegs;
 
-    bool mCrabModeCheckbox = true;
-    bool mCrabMode = true;
+    vec3 mLegStartPos[LEG_COUNT];    
 
-    float mStartDir = FORWARD;
-    float mMoveDir = FORWARD;
-    float mFaceDir = FORWARD;
-    float mTargetDir = FORWARD;
+    std::vector<std::vector<LEG>> mLegSequences = {
+        {LEG::FRONTRIGHT, LEG::MIDLEFT, LEG::BACKRIGHT},
+        {LEG::FRONTLEFT, LEG::MIDRIGHT, LEG::BACKLEFT}
+    };
+
+    vec3 mBodyStepStartPos;
+
+    int mLegSeqIdx;
+    int mStepStartTime;
+    int mBaseStepDuration, mStepDuration;
+
+    ivec2 mJoystickMovePos, mJoystickRotatePos;    
+
+    float mFaceDir = FORWARD, mTargetFaceDir = FORWARD;
+    float mMoveDir = 0;
+    float mCosMoveDir, mSinMoveDir;
     float mChangeStartDir;
     float mChangeOffsetDir;
     float mChangDirStartTime;
     float mChangeDirDuration;
 
-    vec3 mStepStartPos[LEG_COUNT];
-    vec3 mStepBodyStartPos[LEG_COUNT];
-    float mStepFootAngle[LEG_COUNT];
-    vec3 mStepOffsetPos[LEG_COUNT];
-    int mStepStartTimes[LEG_COUNT];
-    bool mStepFootIsStop[LEG_COUNT];
-
     int mComboGaitType = GAITTYPE::TRIPOD;
-
-    GaitManager *mGaitManager;
 
     //Walk properties
     float mStepHeight = 1.0;
-    float mStepDist = 2;    
+    float mPrevStepHeight;
+    vec2 mStepDist;
+    vec2 mPrevStepDist;
 
-    void move(float walkDir);
-    void stop();
+    void checkJoystickPos();
+    void walk();
+    void setNextStep();
     void centerBody();
     void orientToFront();
     void resetFeetPos();
@@ -71,4 +75,6 @@ private:
     void stepTowardsTarget();
     void orientBody();
     void setFeetToCurrPos();
+    void drawMoveJoystick();
+    void drawRotateJoystick();
 };

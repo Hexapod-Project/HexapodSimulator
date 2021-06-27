@@ -1,5 +1,8 @@
 #include "Servo.h"
 #include "Tools.h"
+#include "HexapodConstants.h"
+
+using namespace HexapodConstants;
 
 /**
  * @brief 
@@ -7,15 +10,13 @@
  * So it has been replaced with Node3D script which uses a simpler 3D model.
  */
 
-const float DEFAULT_AXIS_RADIUS = 0.25f;
-const float AXIS_HEIGHT = 0.5f;
-const vec3 AXIS = vec3(0, 1, 0);
+
 
 Servo::Servo()
 {
     mAxisMesh = gl::Batch::create(geom::Cylinder()
                                       .direction(AXIS)
-                                      .radius(DEFAULT_AXIS_RADIUS)
+                                      .radius(AXIS_RADIUS)
                                       .height(AXIS_HEIGHT)
                                       .origin(vec3(0, -AXIS_HEIGHT / 2, 0)),
                                   gl::getStockShader(gl::ShaderDef().color().lambert()));

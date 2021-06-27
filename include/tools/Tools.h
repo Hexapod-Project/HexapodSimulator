@@ -18,4 +18,6 @@ vec2 getCentroid(std::vector<vec2> polygon);
 double toPositiveAngle(double angle);
 double getSmallestAngle(double angle);
 double clampAngleTo360(double angle);
-double getTimeLapsedRatio(int startTime, int duration);
+double normalizeTimelapsed(int startTime, int duration);
+vec2 normalizeJoystickPos(vec2 pos);
+ivec2 degreesToJoyStickPos(float deg);

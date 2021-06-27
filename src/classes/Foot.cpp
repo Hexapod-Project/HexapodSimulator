@@ -1,14 +1,15 @@
 #include "Foot.h"
+#include "HexapodConstants.h"
 
-const float DEFAULT_FOOTHEIGHT = 0.5f;
+using namespace HexapodConstants;
 
 Foot::Foot(vec3 dir)
 {
     mMesh = gl::Batch::create(geom::Cone()
-                                  .height(DEFAULT_FOOTHEIGHT)
-                                  .ratio(0.35)
+                                  .height(FOOTHEIGHT)
+                                  .ratio(AXIS_RADIUS / FOOTHEIGHT)
                                   .direction(dir)
-                                  .origin(dir * -DEFAULT_FOOTHEIGHT),
+                                  .origin(dir * -FOOTHEIGHT),
                               gl::getStockShader(gl::ShaderDef().color().lambert()));
 }
 

@@ -22,7 +22,7 @@ Body::Body(float thickness, float width, float length)
     float hexagonRadius = width/2;
 
     mBodyMesh = gl::Batch::create(geom::Cylinder()
-                                      .subdivisionsAxis(6)
+                                      .subdivisionsAxis(8)
                                       .height(thickness)
                                       .radius(hexagonRadius),
                                   gl::getStockShader(gl::ShaderDef().color().lambert()));

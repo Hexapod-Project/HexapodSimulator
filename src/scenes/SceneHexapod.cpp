@@ -3,7 +3,7 @@
 #include "cinder/CinderImGui.h"
 
 void SceneHexapod::setup()
-{    
+{
     mCam.setPerspective(40.0, getWindowAspectRatio(), 0.01, 200.0);
     mCamUi = CameraUi(&mCam, getWindow());
 
@@ -12,10 +12,11 @@ void SceneHexapod::setup()
 
     mWorldAxisMatrix = mat4(1.0f);
     mWorldAxisViewportSize = vec2(getWindowWidth() / 5, getWindowHeight() / 5);
-    mWorldAxisViewportPos = vec2(getWindowWidth() - mWorldAxisViewportSize.x, 0);    
+    mWorldAxisViewportPos = vec2(getWindowWidth() - mWorldAxisViewportSize.x, 0);
 
     mHexapod.setup();
 
+    mCamOffset = vec3(0, 5 * BODY_WIDTH, -10);
     mCam.lookAt(mHexapod.getPos() + mCamOffset, mHexapod.getPos());
 
     //createShadowMap();
@@ -52,11 +53,11 @@ void SceneHexapod::update()
 {
     drawGUI();
 
-    mWorldAxisMatrix = translate(mCam.getEyePoint()) * toMat4(mCam.getOrientation()) * translate(vec3(0, 0, -5)) / toMat4(mCam.getOrientation());    
+    mWorldAxisMatrix = translate(mCam.getEyePoint()) * toMat4(mCam.getOrientation()) * translate(vec3(0, 0, -5)) / toMat4(mCam.getOrientation());
 
     mHexapod.update();
 
-    if(mFollowHexapod)
+    if (mFollowHexapod)
         mCam.lookAt(mHexapod.getPos() + mCamOffset, mHexapod.getPos());
     else
         mCamOffset = mCam.getEyePoint() - mHexapod.getPos();
@@ -74,7 +75,7 @@ void SceneHexapod::drawGUI()
 void SceneHexapod::draw()
 {
     gl::clear(Color(Color::gray(0.3f)));
-    
+
     {
         gl::ScopedViewport viewport(0, 0, getWindowWidth(), getWindowHeight());
 

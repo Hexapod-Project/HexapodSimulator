@@ -1,4 +1,5 @@
 #include "Tools.h"
+#include "HexapodConstants.h"
 
 vec2 rotateAround(vec2 origin, float distance, float radians)
 {
@@ -38,7 +39,7 @@ vec3 getPosFromMatrix(mat4 matrix)
 //Note: There may be some decrepancies with the euler angles (eg. vec3(0, PI, 0) might be converted to its equivalent vec3(PI, 0, PI))
 //If the exact angles of the axis is required then this method is not the best option
 vec3 getRotFromMatrix(mat4 matrix)
-{    
+{
     return glm::eulerAngles(toQuat(matrix));
 }
 
@@ -56,15 +57,15 @@ vec2 getCentroid(std::vector<vec2> polygon)
 {
     vec2 sum = vec2(0);
 
-    for(int i = 0; i < polygon.size(); i++)
-        sum += polygon[i];    
+    for (int i = 0; i < polygon.size(); i++)
+        sum += polygon[i];
 
-    return sum/(float)polygon.size();
+    return sum / (float)polygon.size();
 }
 
 double toPositiveAngle(double angle)
 {
-    if(angle < 0)
+    if (angle < 0)
         angle = M_PI * 2 + angle;
 
     return angle;
@@ -73,7 +74,7 @@ double toPositiveAngle(double angle)
 //Returns the either the positive or negative angle that has the smallest value
 double getSmallestAngle(double angle)
 {
-    if(angle > M_PI)
+    if (angle > M_PI)
         angle -= M_PI * 2;
     else if (angle < -M_PI)
         angle += M_PI * 2;
@@ -86,7 +87,21 @@ double clampAngleTo360(double angle)
     return fmod(angle, M_PI * 2);
 }
 
-double getTimeLapsedRatio(int startTime, int duration)
+double normalizeTimelapsed(int startTime, int duration)
 {
     return (double)(getCurrTime() - startTime) / duration;
+}
+
+vec2 normalizeJoystickPos(vec2 pos)
+{
+    return (pos - vec2(HexapodConstants::JOYSTICK_ZERO_POS)) / vec2(HexapodConstants::JOYSTICK_MAXDIST);
+}
+
+ivec2 degreesToJoyStickPos(float deg)
+{
+    float rad = (deg * M_PI) / 180;
+    ivec2 result = ivec2(cos(rad) * HexapodConstants::JOYSTICK_MAXDIST + HexapodConstants::JOYSTICK_ZERO_POS,
+                  sin(rad) * HexapodConstants::JOYSTICK_MAXDIST + HexapodConstants::JOYSTICK_ZERO_POS);
+
+    return result;
 }

@@ -1,4 +1,5 @@
 #include "Hexapod.h"
+#include "Tools.h"
 
 const vec2 BTN_SIZE = vec2(100, 25);
 
@@ -15,9 +16,7 @@ void Hexapod::setup()
 
     mBody = Body(BODY_THICKNESS, BODY_WIDTH, BODY_LENGTH);
     mBody.setBase(vec3(0), vec3(0));
-    mBody.mLocalPosY = 1;
-
-    mBody.mStartPos = vec3(0, 1, 0);
+    mBody.mLocalPosY = BODY_Y_OFFSET + BODY_START_Y;
 
     mLegs.clear();
 
@@ -39,7 +38,10 @@ void Hexapod::setup()
         mLegs.push_back(leg);
     }
 
-    mGaitManager = new GaitManager(this);
+    mStepHeight = STEP_HEIGHT;
+
+    mJoystickMovePos = ivec2(JOYSTICK_ZERO_POS);
+    mJoystickRotatePos = degreesToJoyStickPos(90);
 
     ImGui::Initialize();
 }
@@ -129,91 +131,129 @@ void Hexapod::drawGUI()
 
     ImGui::Columns(3);
     ImGui::Combo("Gait", &mComboGaitType, std::vector<std::string>{"Tripod", "Ripple", "Triple", "Wave"});
+    ImGui::NextColumn();
+    ImGui::NextColumn();
 
     ImGui::NextColumn();
-    ImGui::Checkbox("Crab Mode", &mCrabModeCheckbox);
+    ImGui::Text("Walk Directions");
 
-    ImGui::NextColumn();
-    const char *mMoveTypeBtnStr = mMoveTypeBtn == MOVETYPE::WALK ? "Walk" : "Rotate";
-    if (ImGui::Button(mMoveTypeBtnStr))
-    {
-        if (mMoveTypeBtn == MOVETYPE::WALK)
-            mMoveTypeBtn = MOVETYPE::ROTATE;
-        else
-            mMoveTypeBtn = MOVETYPE::WALK;
-    }
-
-    ImGui::NextColumn();
-    ImGui::Text("Directions");
-
-    ImGui::NextColumn();
     ImGui::NextColumn();
     if (ImGui::Button("Reset"))
     {
         resetBodyPos();
-        resetBodyRot();
         resetFeetPos();
     }
 
     ImGui::NextColumn();
 
-    //Directions buttons
+    //Walk buttons
     float moveDir = toDegrees(mMoveDir);
-    ImGui::InputFloat("Move", &moveDir);
-    ImGui::NextColumn();
-    float faceDir = toDegrees(mFaceDir);
-    ImGui::InputFloat("Face", &faceDir);
-    ImGui::NextColumn();
-    float targetDir = toDegrees(mTargetDir);
-    ImGui::InputFloat("Target", &targetDir);
+    ImGui::InputFloat("Move Dir", &moveDir);
     ImGui::NextColumn();
 
+    drawMoveJoystick();
+
+    ImGui::NextColumn();
+
+    ImGui::Separator();
+
+    ImGui::Text("Rotate Directions");
+    ImGui::NextColumn();
+    if (ImGui::Button("Reset"))
+    {
+        resetBodyPos();
+        resetFeetPos();
+    }
+    ImGui::NextColumn();
+    float faceDir = toDegrees(mFaceDir);
+    ImGui::InputFloat("Face Dir", &faceDir);
+    ImGui::NextColumn();
+
+    drawRotateJoystick();
+
+    ImGui::End();
+}
+
+void Hexapod::drawMoveJoystick()
+{
     if (ImGui::Button("Left Forward", BTN_SIZE))
-        move(LEFT_FORWARD);
+        mJoystickMovePos = degreesToJoyStickPos(45);
 
     ImGui::NextColumn();
     if (ImGui::Button("Forward", BTN_SIZE))
-        move(FORWARD);
+        mJoystickMovePos = degreesToJoyStickPos(90);
 
     ImGui::NextColumn();
     if (ImGui::Button("Right Forward", BTN_SIZE))
-        move(RIGHT_FORWARD);
+        mJoystickMovePos = degreesToJoyStickPos(135);
 
     ImGui::NextColumn();
     if (ImGui::Button("Left", BTN_SIZE))
-        move(LEFT);
+        mJoystickMovePos = degreesToJoyStickPos(0);
 
     ImGui::NextColumn();
-    const char *stopBtnStr = mGaitManager->isStopping() ? "Stopping" : "Stop";
+    const char *stopBtnStr = mMoveState == MOVESTATE::STOPPING ? "Stopping" : "Stop";
 
     if (ImGui::Button(stopBtnStr, BTN_SIZE))
-        stop();
+        mJoystickMovePos = ivec2(JOYSTICK_ZERO_POS);
 
     ImGui::NextColumn();
     if (ImGui::Button("Right", BTN_SIZE))
-        move(RIGHT);
+        mJoystickMovePos = degreesToJoyStickPos(180);
 
     ImGui::NextColumn();
     if (ImGui::Button("Left Backward", BTN_SIZE))
-        move(LEFT_BACKWARD);
+        mJoystickMovePos = degreesToJoyStickPos(315);
 
     ImGui::NextColumn();
     if (ImGui::Button("Backward", BTN_SIZE))
-        move(BACKWARD);
+        mJoystickMovePos = degreesToJoyStickPos(270);
 
     ImGui::NextColumn();
     if (ImGui::Button("Right Backward", BTN_SIZE))
-        move(RIGHT_BACKWARD);
+        mJoystickMovePos = degreesToJoyStickPos(225);
+}
 
-    ImGui::End();
+void Hexapod::drawRotateJoystick()
+{
+    if (ImGui::Button("45", BTN_SIZE))
+        mJoystickRotatePos = degreesToJoyStickPos(45);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("90", BTN_SIZE))
+        mJoystickRotatePos = degreesToJoyStickPos(90);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("135", BTN_SIZE))
+        mJoystickRotatePos = degreesToJoyStickPos(135);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("0", BTN_SIZE))
+        mJoystickRotatePos = degreesToJoyStickPos(0);
+
+    ImGui::NextColumn();
+
+    ImGui::NextColumn();
+    if (ImGui::Button("180", BTN_SIZE))
+        mJoystickRotatePos = degreesToJoyStickPos(180);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("315", BTN_SIZE))
+        mJoystickRotatePos = degreesToJoyStickPos(315);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("270", BTN_SIZE))
+        mJoystickRotatePos = degreesToJoyStickPos(270);
+
+    ImGui::NextColumn();
+    if (ImGui::Button("225", BTN_SIZE))
+        mJoystickRotatePos = degreesToJoyStickPos(225);
 }
 
 void Hexapod::resetFeetPos()
 {
     for (int i = 0; i < LEG_COUNT; i++)
-    {
         mLegs[i]->resetFootTargetPos();
-    }
 }
 
 void Hexapod::resetBodyPos()
@@ -221,6 +261,8 @@ void Hexapod::resetBodyPos()
     mBody.mLocalPosX = mBody.mStartPos.x;
     mBody.mLocalPosY = mBody.mStartPos.y;
     mBody.mLocalPosZ = mBody.mStartPos.z;
+
+    mBodyStepStartPos = vec3(0);
 }
 
 void Hexapod::resetBodyRot()
@@ -228,39 +270,24 @@ void Hexapod::resetBodyRot()
     mBody.mRoll = 0;
     mBody.mYaw = 0;
     mBody.mPitch = 0;
-    mMoveDir = mStartDir;
-    mTargetDir = mStartDir;
-    mFaceDir = mStartDir;
+    mFaceDir = FORWARD;
 }
 
 void Hexapod::update()
 {
-    bool isMoving = mGaitManager->isMoving();
+    drawGUI();
+    
+    checkJoystickPos();
 
-    //Manage the feet positions if the hexapod is currently moving
-    if (isMoving)
-    {
-        mGaitManager->runGait();
-
-        //Take a step towards the new feet positions
-        stepTowardsTarget();
-
-        //Center/Orient the body
-        if (mMoveType == MOVETYPE::WALK)
-            centerBody();
-
-        if (!mCrabMode || mMoveType == MOVETYPE::ROTATE)
-            orientBody();
-    }
+    if (mMoveState != MOVESTATE::STOPPED)
+        walk();
 
     //Update the legs transformation visually
     for (Leg3D *leg : mLegs)
         leg->update();
 
     //Update the body transformations visually
-    mBody.update();
-
-    drawGUI();
+    mBody.update();    
 }
 
 void Hexapod::draw()
@@ -276,182 +303,132 @@ void Hexapod::drawCoord()
     mBody.drawCoord();
 }
 
-void Hexapod::setWalkProperties(float stepHeight, float stepDist)
+void Hexapod::checkJoystickPos()
 {
-    mStepHeight = stepHeight;
-    mStepDist = stepDist;
-}
+    vec2 rot = normalizeJoystickPos(mJoystickRotatePos);
+    float rotDir = atan2(rot.y, rot.x);
 
-void Hexapod::move(float dir)
-{
-    if (mGaitManager->isStopping())
+    if (mJoystickMovePos == ivec2(JOYSTICK_ZERO_POS) && compareFloats(rotDir, mFaceDir, 0.5))
+    {
+        if (mMoveState == MOVESTATE::MOVING)
+            mMoveState = MOVESTATE::STOPSTARTED;
+
+        mMoveDir = 0;
         return;
-
-    if (!mGaitManager->isMoving())
-    {
-        mMoveType = mMoveTypeBtn;
-        mCrabMode = mCrabModeCheckbox;
     }
 
-    if (!mGaitManager->isMoving() && (mMoveType == MOVETYPE::WALK || mMoveType == MOVETYPE::ROTATE && !compareFloats(mFaceDir, dir)))
-    {        
-        if (!mCrabMode || mMoveType == MOVETYPE::ROTATE)
-            mTargetDir = mFaceDir;
+    mFaceDir = rotDir;
 
-        for (int i = 0; i < LEG_COUNT; i++)
+    vec2 pos = normalizeJoystickPos(mJoystickMovePos);
+    float moveDir = atan2(pos.y, pos.x);
+    float speed = sqrt(dot(pos, pos));
+
+    //TODO: Rotate in place and rotate while walking
+    if (mMoveState == MOVESTATE::STOPPED && speed > 0.00001)
+    {
+        mLegSeqIdx = mLegSequences.size() - 1; //Set to mLegSequences.size() - 1 so that when calling setNextStep, it will set it to 0
+        mMoveDir = moveDir;
+
+        mCosMoveDir = cos(mMoveDir);
+        mSinMoveDir = sin(mMoveDir);
+
+        mStepStartTime = getCurrTime(); //Set it to current time so that the time offset added in setNextStep will be rmeoved
+        mMoveState = MOVESTATE::MOVING;
+        mPrevStepDist = vec2(0);
+        mStepDist = vec2(mCosMoveDir * STEP_DIST, mSinMoveDir * STEP_DIST);
+        mBaseStepDuration = BASE_STEP_DURATION / (1 + speed);
+        mStepDuration = mBaseStepDuration;
+    }
+    else if (!compareFloats(mMoveDir, moveDir))
+    {
+        mMoveDir = moveDir;
+        mCosMoveDir = cos(mMoveDir);
+        mSinMoveDir = sin(mMoveDir);
+        setNextStep();
+    }
+}
+
+void Hexapod::setNextStep()
+{
+    //Reset the step start time
+    int currTime = getCurrTime();
+    //Calculate the durations left over from the previous step that was not able to complete due to changing directions
+    mStepStartTime = currTime;
+    mStepDuration = mBaseStepDuration - (currTime - mStepStartTime);
+
+    //Go to the next leg sequence group
+    mLegSeqIdx++;
+    if (mLegSeqIdx >= mLegSequences.size())
+        mLegSeqIdx = 0;
+
+    vec3 rootPos = mBody.getLocalPos();
+
+    Leg3D *currLeg = mLegs[mLegSequences[mLegSeqIdx][0]];
+    vec3 footWorldPos = currLeg->getFootWorldPos();
+    mPrevStepDist = vec2(currLeg->mFootStartPos.x + rootPos.x - footWorldPos.x, currLeg->mFootStartPos.z + rootPos.z - footWorldPos.z);
+
+    mPrevStepHeight = footWorldPos.y;
+    mStepDist = vec2(mCosMoveDir * STEP_DIST, mSinMoveDir * STEP_DIST);
+
+    if (mMoveState != MOVESTATE::STOPSTARTED)
+        mStepDist += mPrevStepDist;
+    else
+        mMoveState = MOVESTATE::STOPPING;
+
+    //Update the body position vector to match the body matrix
+    mBodyStepStartPos.x = rootPos.x;
+    mBodyStepStartPos.z = rootPos.z;
+}
+
+void Hexapod::walk()
+{
+    float normalizedTimelapsed = normalizeTimelapsed(mStepStartTime, mStepDuration);
+
+    if (normalizedTimelapsed >= 1)
+    {
+        if (mMoveState != MOVESTATE::STOPPING)
         {
-            mStepStartPos[i] = mLegs[i]->mTargetFootPos;
-            mStepOffsetPos[i] = vec3(0);
+            setNextStep();
+            normalizedTimelapsed = 0;
+        }
+        else //Stops the walk cycle
+        {
+            mMoveState = MOVESTATE::STOPPED;
+            //Resets the positions back to 0 so that the values will not accumulate in the next walk cycle
+            // resetFeetPos();
+            // resetBodyPos();
+            return;
+        }
+    }
+
+    if (normalizedTimelapsed >= 0)
+    {
+        float footYOffset = sin(M_PI * normalizedTimelapsed) * STEP_HEIGHT + mPrevStepHeight * (1 - normalizedTimelapsed);
+        float footXOffset = mStepDist.x * normalizedTimelapsed - mPrevStepDist.x + mBodyStepStartPos.x;
+        float footZOffset = mStepDist.y * normalizedTimelapsed - mPrevStepDist.y + mBodyStepStartPos.z;
+
+        vec3 offset = vec3(footXOffset, footYOffset, footZOffset);
+
+        //Set the new foot target position
+        for (int i = 0; i < 3; i++)
+        {
+            int idx = mLegSequences[mLegSeqIdx][i];
+            vec3 newPos = mLegs[idx]->mFootStartPos + offset;
+            mLegs[idx]->setFootTargetPos(newPos);
         }
 
-        mGaitManager->setWalkDir(dir);
-        mGaitManager->startGait((GAITTYPE)mComboGaitType);
-    }
-    else if (!compareFloats(mTargetDir, dir) || mMoveType == MOVETYPE::ROTATE && !compareFloats(mFaceDir, dir))
-        mGaitManager->setWalkDir(dir);
-}
-
-void Hexapod::stop()
-{
-    if(mCrabMode || !mCrabMode && compareFloats(mTargetDir, mFaceDir))
-        mGaitManager->stopGait();
-}
-
-void Hexapod::stepTowardsTarget()
-{
-    for (int footIdx = 0; footIdx < mLegs.size(); footIdx++)
-    {
-        float timeLapsedRatio = getTimeLapsedRatio(mStepStartTimes[footIdx], mGaitManager->getStepDuration());
-
-        if (timeLapsedRatio >= 0 && timeLapsedRatio <= 1)
+        //Move the body forward
+        if (mMoveState != MOVESTATE::STOPPING)
         {
-            vec3 startFootPos = mLegs[footIdx]->mFootStartPos + mBody.mLocalPos;
-            vec3 newPos = mLegs[footIdx]->mTargetFootPos;
-            vec3 stepStartPos = mStepStartPos[footIdx];
-            vec3 stepOffset = mStepOffsetPos[footIdx];
-            vec3 bodyStartPos = mStepBodyStartPos[footIdx];
-
-            if (!mCrabMode && !compareFloats(mMoveDir, mTargetDir) && !mStepFootIsStop[footIdx] && mMoveType == MOVETYPE::WALK)
-            {
-                float newFootAngle = mLegs[footIdx]->mFootStartAngle + getSmallestAngle(mMoveDir - mStartDir);
-                startFootPos.x = cos(newFootAngle) * FOOT_DIST + bodyStartPos.x;
-                startFootPos.z = sin(newFootAngle) * FOOT_DIST + bodyStartPos.z;
-
-                vec3 footDiff = stepStartPos - startFootPos;
-                float footDist = sqrt(footDiff.x * footDiff.x + footDiff.z * footDiff.z);
-
-                stepOffset.x = cos(mMoveDir) * mStepDist - footDiff.x;
-                stepOffset.z = sin(mMoveDir) * mStepDist - footDiff.z;
-            }
-
-            //Calculate the new position based on the time lapsed and the offset
-            vec3 offset = stepOffset * timeLapsedRatio;
-
-            if (mMoveType == MOVETYPE::WALK || mMoveType == MOVETYPE::ROTATE && !compareFloats(mTargetDir, mFaceDir))
-                offset.y = sin(timeLapsedRatio * M_PI) * mStepHeight - stepStartPos.y * timeLapsedRatio;
-            else
-            {
-                vec2 footDiff = vec2(stepOffset.x, stepOffset.z);
-                float footDist = sqrt(dot(footDiff, footDiff));
-                
-                if(footDist > 0.0001)
-                    offset.y = sin(timeLapsedRatio * M_PI) * footDist - stepStartPos.y * timeLapsedRatio;
-                else
-                    mGaitManager->stopGaitImmediate();
-            }
-
-            newPos = stepStartPos + offset;
-
-            //Update the feet current position to the new position
-            mLegs[footIdx]->mTargetFootPosX = newPos.x;
-            mLegs[footIdx]->mTargetFootPosY = newPos.y;
-            mLegs[footIdx]->mTargetFootPosZ = newPos.z;
+            float baseBodyOffset = STEP_DIST * normalizedTimelapsed;
+            mBody.mLocalPosX = mBodyStepStartPos.x + mCosMoveDir * baseBodyOffset;
+            mBody.mLocalPosZ = mBodyStepStartPos.z + mSinMoveDir * baseBodyOffset;
         }
     }
-}
-
-void Hexapod::setNextStep(int footIdx, int startTime, bool isStop)
-{
-    vec3 startFootPos = mLegs[footIdx]->mFootStartPos + mBody.mLocalPos;
-    vec3 currFootPos = mLegs[footIdx]->mTargetFootPos;
-
-    float newFootAngle = mLegs[footIdx]->mFootStartAngle + getSmallestAngle(mFaceDir - mStartDir);
-    startFootPos.x = cos(newFootAngle) * FOOT_DIST + mBody.mLocalPosX;
-    startFootPos.z = sin(newFootAngle) * FOOT_DIST + mBody.mLocalPosZ;
-
-    vec3 footDiff = currFootPos - startFootPos;
-
-    if (!isStop && mMoveType != MOVETYPE::ROTATE)
-    {
-        float offsetX = cos(mMoveDir) * mStepDist - footDiff.x;
-        float offsetZ = sin(mMoveDir) * mStepDist - footDiff.z;
-        mStepOffsetPos[footIdx] = vec3(offsetX, 0, offsetZ);
-    }
-    else
-        mStepOffsetPos[footIdx] = vec3(-footDiff.x, 0, -footDiff.z);
-
-    //Set the next step start position to the current foot position
-    mStepStartPos[footIdx] = currFootPos;
-    mStepBodyStartPos[footIdx] = mBody.mLocalPos;
-    mStepFootIsStop[footIdx] = isStop;
-
-    if (mStepStartTimes[footIdx] != startTime)
-        mStepStartTimes[footIdx] = startTime;
-}
-
-void Hexapod::changeDir(double dir, float grpSize, int startTime)
-{
-    dir = clampAngleTo360(toPositiveAngle(dir));
-
-    if (!mCrabMode || mMoveType == MOVETYPE::ROTATE)
-    {
-        float maxAngleRot = BASE_MAXROT_ANGLE / grpSize;
-        mChangeOffsetDir = getSmallestAngle(dir - mFaceDir);
-        if (std::abs(mChangeOffsetDir) > maxAngleRot)
-            mChangeOffsetDir = std::copysignf(maxAngleRot, mChangeOffsetDir);
-
-        mChangeStartDir = mFaceDir;
-        mChangDirStartTime = startTime;
-        mChangeDirDuration = mGaitManager->getStepDuration();
-    }
-    else
-        mMoveDir = dir;
-
-    mTargetDir = dir;
 }
 
 void Hexapod::orientBody()
 {
-    float timeLapsedRatio = getTimeLapsedRatio(mChangDirStartTime, mChangeDirDuration);
-
-    if (timeLapsedRatio >= 0 && timeLapsedRatio <= 1)
-    {
-        float newDir =  clampAngleTo360(toPositiveAngle(mChangeStartDir + mChangeOffsetDir * timeLapsedRatio));
-
-        mMoveDir = newDir;
-        mFaceDir = newDir;
-    }
-
-    if (timeLapsedRatio >= 1)
-    {
-        if (!compareFloats(mFaceDir, mTargetDir))
-            changeDir(mTargetDir, mGaitManager->mCurrGaitGroupSize, getCurrTime());                    
-    }
-
-    mBody.mYaw = toDegrees(-getSmallestAngle(mFaceDir - mStartDir));
-}
-
-void Hexapod::centerBody()
-{
-    std::vector<vec2> currFeetPolygon;
-    for (int i = 0; i < LEG_COUNT; i++)
-        currFeetPolygon.push_back(vec2(mLegs[i]->mTargetFootPosX, mLegs[i]->mTargetFootPosZ));
-
-    //Get the center of mass
-    vec2 centroid = getCentroid(currFeetPolygon);
-
-    mBody.mLocalPosX = centroid.x;
-    mBody.mLocalPosZ = centroid.y;
 }
 
 vec3 Hexapod::getPos()
