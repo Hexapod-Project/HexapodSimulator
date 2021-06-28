@@ -45,16 +45,13 @@ private:
     int mLegSeqIdx;
     int mStepStartTime;
     int mBaseStepDuration, mStepDuration;
+    float mStepDistMulti;
 
     ivec2 mJoystickMovePos, mJoystickRotatePos;    
 
     float mFaceDir = FORWARD, mTargetFaceDir = FORWARD;
     float mMoveDir = 0;
     float mCosMoveDir, mSinMoveDir;
-    float mChangeStartDir;
-    float mChangeOffsetDir;
-    float mChangDirStartTime;
-    float mChangeDirDuration;
 
     int mComboGaitType = GAITTYPE::TRIPOD;
 
@@ -64,9 +61,14 @@ private:
     vec2 mStepDist;
     vec2 mPrevStepDist;
 
+    float mStepRotAngle;
+    float mBodyStepStartYaw;
+
     void checkJoystickPos();
     void walk();
+    void setNextStepRot();
     void setNextStep();
+    void initStep();
     void centerBody();
     void orientToFront();
     void resetFeetPos();

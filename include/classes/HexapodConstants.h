@@ -54,8 +54,9 @@ namespace HexapodConstants
     const float LEFT_BACKWARD = 7 * M_PI / 4;
 
     //Walk properties
-    const int BASE_STEP_DURATION = 1000;      //Duration in ms that each step takes to complete
-    const float BASE_MAXROT_ANGLE = M_PI / 4; //Maximum angle of rotation per step
+    const int BASE_STEP_DURATION = 500;      //Duration in ms that each step takes to complete
+    const float MAXRAD_PERSTEP = M_PI_2 / 4; //Maximum angle of rotation per step
+    const float MAXDEG_PERSTEP = 22.5; //Maximum angle of rotation per step
 
     const float STEP_HEIGHT = 1.0;
     const float STEP_DIST = 2;
