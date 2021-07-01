@@ -46,7 +46,48 @@ void Hexapod::setup()
     mJoystickMovePos = ivec2(JOYSTICK_ZERO_POS);
     mJoystickRotatePos = ivec2(JOYSTICK_ZERO_POS);
 
+    initGaits();
+
     ImGui::Initialize();
+}
+
+void Hexapod::initGaits()
+{
+    mGaits.resize(4);
+
+    mGaits[GAITTYPE::TRIPOD].setStepDuration(BASE_STEP_DURATION / 2);
+    mGaits[GAITTYPE::TRIPOD].setGroups({GaitGroup({LEG::FRONTLEFT, LEG::MIDRIGHT, LEG::BACKLEFT}),
+                                        GaitGroup({LEG::FRONTRIGHT, LEG::MIDLEFT, LEG::BACKRIGHT})});
+
+    mGaits[GAITTYPE::RIPPLE].setStepDuration(BASE_STEP_DURATION / 3);
+    mGaits[GAITTYPE::RIPPLE].setTimeOffset(-BASE_STEP_DURATION / 6);
+    mGaits[GAITTYPE::RIPPLE].setGroups({GaitGroup({LEG::FRONTRIGHT}),
+                                        GaitGroup({LEG::MIDRIGHT}),
+                                        GaitGroup({LEG::BACKRIGHT}),
+                                        GaitGroup({LEG::BACKLEFT}),
+                                        GaitGroup({LEG::MIDLEFT}),
+                                        GaitGroup({LEG::FRONTLEFT})});
+
+    mGaits[GAITTYPE::TRIPLE].setStepDuration(BASE_STEP_DURATION / 3);
+    mGaits[GAITTYPE::TRIPLE].setTimeOffset(-mGaits[GAITTYPE::TRIPLE].getStepDuration() / 4.5);
+    int triplePauseDuration = (7 / 20) * mGaits[GAITTYPE::TRIPLE].getStepDuration();
+    mGaits[GAITTYPE::TRIPLE].setGroups({GaitGroup({LEG::FRONTLEFT}),
+                                        GaitGroup({LEG::MIDRIGHT}),
+                                        GaitGroup({LEG::BACKLEFT}, triplePauseDuration),
+                                        GaitGroup({LEG::FRONTRIGHT}),
+                                        GaitGroup({LEG::MIDLEFT}),
+                                        GaitGroup({LEG::BACKRIGHT}, triplePauseDuration)});
+
+    mGaits[GAITTYPE::WAVE].setStepDuration(BASE_STEP_DURATION / 3);
+    mGaits[GAITTYPE::WAVE].setTimeOffset(-mGaits[GAITTYPE::WAVE].getStepDuration() / 6);
+    mGaits[GAITTYPE::WAVE].setGroups({GaitGroup({LEG::FRONTLEFT}),
+                                      GaitGroup({LEG::MIDLEFT}),
+                                      GaitGroup({LEG::BACKLEFT}),
+                                      GaitGroup({LEG::FRONTRIGHT}),
+                                      GaitGroup({LEG::MIDRIGHT}),
+                                      GaitGroup({LEG::BACKRIGHT})});
+
+    mCurrGaitGrpSize = mGaits[mGaitType].getGroupSize();
 }
 
 void Hexapod::drawGUI()
@@ -284,6 +325,11 @@ void Hexapod::update()
 
     if (mMoveState != MOVESTATE::STOPPED)
         walk();
+    else if (mGaitType != mComboGaitType)
+    {
+        mGaitType = (GAITTYPE)mComboGaitType;
+        mCurrGaitGrpSize = mGaits[mGaitType].getGroupSize();
+    }
 
     //Update the legs transformation visually
     for (Leg3D *leg : mLegs)
@@ -359,7 +405,7 @@ void Hexapod::checkJoystickPos()
             mSinMoveDir = sin(mMoveDir);
 
             mStepDistMulti = sqrt(dot(pos, pos));
-            float baseStepDist = STEP_DIST * mStepDistMulti;
+            mStepDistMulti = mStepDistMulti / (mCurrGaitGrpSize - 1);
 
             if (compareFloats(mTargetFaceDir, mFaceDir))
             {
@@ -384,20 +430,21 @@ void Hexapod::initStep()
 {
     mStepStartTime = getCurrTime(); //Set it to current time so that the time offset added in setNextStep will be rmeoved
     mStepDuration = BASE_STEP_DURATION;
-    mLegSeqIdx = mLegSequences.size() - 1;
+    mLegSeqIdx = mCurrGaitGrpSize - 1;
     mMoveState = MOVESTATE::MOVING;
 }
 
 void Hexapod::setNextStepRot()
 {
-    if (compareFloats(mFaceDir, mTargetFaceDir))   
+    if (compareFloats(mFaceDir, mTargetFaceDir))
         return;
 
-    //Store the values after being rotated    
-    mFaceDir = clampAngleTo360(toPositiveAngle(FORWARD - mBody.mYaw));    
+    //Store the values after being rotated
+    mFaceDir = clampAngleTo360(toPositiveAngle(FORWARD - mBody.mYaw));
 
     float diffAngle = getSmallestAngle(mTargetFaceDir - mFaceDir);
-    mStepRotAngle = fabs(diffAngle) > MAXRAD_PERSTEP ? copysign(MAXRAD_PERSTEP, diffAngle) : diffAngle;
+    float maxRadPerStep = MAXRAD_PERSTEP / (mCurrGaitGrpSize - 1);
+    mStepRotAngle = fabs(diffAngle) > maxRadPerStep ? copysign(maxRadPerStep, diffAngle) : diffAngle;
     mBodyStepStartYaw = toPositiveAngle(mBody.mYaw);
 }
 
@@ -407,18 +454,21 @@ void Hexapod::setNextStep()
     int currTime = getCurrTime();
     //Calculate the durations left over from the previous step that was not able to complete due to changing directions
     mStepStartTime = currTime;
-    mStepDuration = BASE_STEP_DURATION - (currTime - mStepStartTime);
+    mStepDuration = mGaits[mGaitType].getStepDuration() - (currTime - mStepStartTime);
 
     //Go to the next leg sequence group
     mLegSeqIdx++;
-    if (mLegSeqIdx >= mLegSequences.size())
+    if (mLegSeqIdx >= mCurrGaitGrpSize)
         mLegSeqIdx = 0;
 
     vec3 rootPos = mBody.getLocalPos();
 
-    for (int i = 0; i < 3; i++)
+    mLegIndices = mGaits[mGaitType].getGroup(mLegSeqIdx)->getLegIndices();
+    float baseStepDist = STEP_DIST * mStepDistMulti;
+
+    for (int i = 0; i < mLegIndices.size(); i++)
     {
-        int legIdx = mLegSequences[mLegSeqIdx][i];
+        int legIdx = mLegIndices[i];
         Leg3D *currLeg = mLegs[legIdx];
 
         //Store the current position of the leg as the step starting position
@@ -431,23 +481,23 @@ void Hexapod::setNextStep()
         vec3 bodyPosXZ = vec3(rootPos.x, 0, rootPos.z);
         //Calculate the step distance
         vec3 footStartPos = rotateAroundY(currLeg->mFootStartPos, -mBody.mYaw) + bodyPosXZ;
-        vec3 footDiff = mLegStepStartPos[legIdx] - footStartPos;
-
-        float baseStepDist = STEP_DIST * mStepDistMulti;
-        mStepDist[legIdx] = vec3(mCosMoveDir * baseStepDist, 0, mSinMoveDir * baseStepDist);
+        vec3 footDiff = mLegStepStartPos[legIdx] - footStartPos;        
 
         //Include the foot differences if it is still moving
-        if (mMoveState != MOVESTATE::STOPSTARTED)
-            mStepDist[legIdx] -= footDiff;
-    }         
+        if (mMoveState == MOVESTATE::MOVING)        
+            mStepDist[legIdx] = vec3(mCosMoveDir * baseStepDist, 0, mSinMoveDir * baseStepDist) - footDiff;            
+        else
+            mStepDist[legIdx] = -footDiff;
+            
+    }
 
     //Update the body position vector to match the body matrix
     mBodyStepStartPos.x = rootPos.x;
     mBodyStepStartPos.z = rootPos.z;
     mBodyDistMulti = mStepDistMulti;
 
-    if (mMoveState == MOVESTATE::STOPSTARTED)
-        mMoveState = MOVESTATE::STOPPING;
+    if (mMoveState == MOVESTATE::STOPSTARTED)    
+        mMoveState = MOVESTATE::STOPPING;            
 }
 
 void Hexapod::walk()
@@ -456,11 +506,14 @@ void Hexapod::walk()
 
     if (normalizedTimelapsed >= 1)
     {
-        if (mMoveState != MOVESTATE::STOPPING)
+        if (mGroupStoppedCount < mCurrGaitGrpSize - 1)
         {
             setNextStep();
             setNextStepRot();
             normalizedTimelapsed = 0;
+
+            if(mMoveState == MOVESTATE::STOPPING)
+                mGroupStoppedCount++;
         }
         else //Stops the walk cycle
         {
@@ -469,6 +522,7 @@ void Hexapod::walk()
             mBodyDistMulti = 0;
             mStepRotAngle = 0;
             mTargetFaceDir = mFaceDir;
+            mGroupStoppedCount = 0;
 
             return;
         }
@@ -479,9 +533,9 @@ void Hexapod::walk()
         float rotAngle = mStepRotAngle * normalizedTimelapsed;
 
         //Set the new foot target position
-        for (int i = 0; i < 3; i++)
+        for (int i = 0; i < mLegIndices.size(); i++)
         {
-            int legIdx = mLegSequences[mLegSeqIdx][i];
+            int legIdx = mLegIndices[i];
 
             float footYOffset = sin(M_PI * normalizedTimelapsed) * STEP_HEIGHT + mPrevStepHeight[legIdx] * (1 - normalizedTimelapsed);
             float footXOffset = mStepDist[legIdx].x * normalizedTimelapsed;
@@ -506,10 +560,6 @@ void Hexapod::walk()
             mBody.mYaw = mBodyStepStartYaw - rotAngle;
         }
     }
-}
-
-void Hexapod::orientBody()
-{
 }
 
 vec3 Hexapod::getPos()

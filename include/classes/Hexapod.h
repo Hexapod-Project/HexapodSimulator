@@ -6,6 +6,8 @@
 #include "Body.h"
 #include "Enums.h"
 #include "HexapodConstants.h"
+#include "Gait.h"
+#include "GaitGroup.h"
 
 using namespace ci;
 using namespace HexapodConstants;
@@ -33,9 +35,13 @@ private:
 
     std::vector<Leg3D *> mLegs;
 
-    std::vector<std::vector<LEG>> mLegSequences = {
-        {LEG::FRONTRIGHT, LEG::MIDLEFT, LEG::BACKRIGHT},
-        {LEG::FRONTLEFT, LEG::MIDRIGHT, LEG::BACKLEFT}};
+    std::vector<Gait> mGaits;
+    GAITTYPE mGaitType = GAITTYPE::TRIPOD;
+    std::vector<LEG> mLegIndices;
+
+    int mLegSeqIdx;
+    int mGroupStoppedCount = 0;
+    int mCurrGaitGrpSize;
 
     vec3 mBodyStepStartPos;
     vec3 mLegStepStartPos[LEG_COUNT];
@@ -45,8 +51,7 @@ private:
 
     float mStepRotAngle;
     float mBodyStepStartYaw;
-
-    int mLegSeqIdx;
+    
     int mStepStartTime;
     int mStepDuration;
     float mStepDistMulti, mBodyDistMulti;    
@@ -62,6 +67,7 @@ private:
     //Walk properties
     float mStepHeight = 1.0;    
 
+    void initGaits();
     void checkJoystickPos();
     void walk();
     void setNextStepRot();
