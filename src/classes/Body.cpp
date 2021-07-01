@@ -40,7 +40,7 @@ Body::Body(float thickness, float width, float length)
      */
     float hexagonHeight = sin(M_PI - M_PI/2 - M_PI/6) * hexagonRadius * 2;    
     float scaleRatio = length/hexagonHeight - 1;    
-    mBodyMatrix = scale(vec3(1) + BODY_FORWARD_DIR * scaleRatio);
+    mBodyMatrix = scale(vec3(1) + BODY_FORWARD_DIR * scaleRatio) * rotate((float)M_PI_2 / 4, vec3(0, 1, 0));
 }
 
 void Body::update()

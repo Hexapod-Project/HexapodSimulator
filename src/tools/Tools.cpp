@@ -101,7 +101,15 @@ ivec2 degreesToJoyStickPos(float deg)
 {
     float rad = (deg * M_PI) / 180;
     ivec2 result = ivec2(cos(rad) * HexapodConstants::JOYSTICK_MAXDIST + HexapodConstants::JOYSTICK_ZERO_POS,
-                  sin(rad) * HexapodConstants::JOYSTICK_MAXDIST + HexapodConstants::JOYSTICK_ZERO_POS);
+                         sin(rad) * HexapodConstants::JOYSTICK_MAXDIST + HexapodConstants::JOYSTICK_ZERO_POS);
 
     return result;
+}
+
+vec3 rotateAroundY(vec3 point, float rad)
+{
+    float cosRad = cos(rad);
+    float sinRad = sin(rad);
+
+    return vec3(point.x * cosRad - sinRad * point.z, point.y, point.z * cosRad + sinRad * point.x);
 }

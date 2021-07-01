@@ -21,3 +21,4 @@ double clampAngleTo360(double angle);
 double normalizeTimelapsed(int startTime, int duration);
 vec2 normalizeJoystickPos(vec2 pos);
 ivec2 degreesToJoyStickPos(float deg);
+vec3 rotateAroundY(vec3 point, float rad);
