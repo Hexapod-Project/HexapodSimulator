@@ -6,3 +6,6 @@ all:
 	cmake -B $(BUILD_PATH)
 	cd $(BUILD_PATH) && make
 	$(BUILD_PATH)/Debug/$(PORJECT_NAME)/$(PORJECT_NAME)
+
+run:
+	$(BUILD_PATH)/Debug/$(PORJECT_NAME)/$(PORJECT_NAME)

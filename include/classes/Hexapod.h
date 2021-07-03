@@ -66,7 +66,7 @@ private:
     
     int mStepStartTime;
     int mStepDuration;
-    float mStepDistMulti, mBodyDistMulti;    
+    float mStepDistMulti;    
     float mStepHeight;
 
     ivec2 mJoystickMovePos, mJoystickRotatePos;
@@ -76,6 +76,8 @@ private:
     float mCosMoveDir, mSinMoveDir;
 
     int mComboGaitType = GAITTYPE::TRIPOD;
+
+    bool mNaturalWalkMode = true;
 
     void initGaits();
     void checkJoystickPos();
