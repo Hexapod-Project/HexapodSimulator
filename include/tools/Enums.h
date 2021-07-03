@@ -22,9 +22,9 @@ enum TWEENTYPE {
 enum GAITTYPE
 {
     TRIPOD,
-    RIPPLE, //FR, MR, BR, BL, ML, FL
     TRIPLE, //Tripod + Ripple
-    WAVE
+    WAVE,
+    RIPPLE, //FR, MR, BR, BL, ML, FL        
 };
 
 enum MOVESTATE {
