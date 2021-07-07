@@ -1,1 +1,0 @@
-clear && make -C build && ./run.sh

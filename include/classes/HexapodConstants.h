@@ -29,7 +29,7 @@ namespace HexapodConstants
     const float BODY_FRONTBACK_WIDTH = sqrt(2 * BODY_HALFWIDTH_SQR - cos(M_PI / 3) * 2 * BODY_HALFWIDTH_SQR);
 
     const float BODY_Y_OFFSET = 1.5;
-    const float BODY_START_Y = 1;
+    const float BODY_START_Y = 2;
 
     //Leg Front Back X Offset
     const float X_FB_LEG_OFFSET = cos(M_PI_4) * LEG_DIST_FROM_ORIGIN;
@@ -54,13 +54,13 @@ namespace HexapodConstants
     const float LEFT_BACKWARD = 7 * M_PI / 4;
 
     //Walk properties
-    const int BASE_STEP_DURATION = 500;      //Duration in ms that one walk cycle takes to complete
+    const int BASE_STEP_DURATION = 350;      //Duration in ms that one walk cycle takes to complete
     const float MAXRAD_PERSTEP = M_PI_2 / 8; //Maximum angle of rotation per step
     const float MAXDEG_PERSTEP = toDegrees(MAXRAD_PERSTEP); //Maximum angle of rotation per step
 
     const float MIN_STEP_HEIGHT = 0.5;
-    const float STEP_HEIGHT = 1.0;
-    const float STEP_DIST = 2;
+    const float STEP_HEIGHT = 2.0;
+    const float STEP_DIST = 3;
 
     const int JOYSTICK_POSITIVE_MAXPOS = 255;
     const int JOYSTICK_NEGATIVE_MAXPOS = 1;

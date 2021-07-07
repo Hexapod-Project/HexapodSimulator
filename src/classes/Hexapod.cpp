@@ -66,8 +66,8 @@ void Hexapod::initGaits()
     mGaits[GAITTYPE::TRIPOD].mGaitGroups = {{GaitGroup({LEG::FRONTLEFT, LEG::MIDRIGHT, LEG::BACKLEFT}),
                                              GaitGroup({LEG::FRONTRIGHT, LEG::MIDLEFT, LEG::BACKRIGHT})}};
 
-    mGaits[GAITTYPE::TRIPLE].mGaitGroups = {{GaitGroup({LEG::FRONTLEFT, LEG::MIDRIGHT, LEG::BACKLEFT}, 0.5),
-                                             GaitGroup({LEG::FRONTRIGHT, LEG::MIDLEFT, LEG::BACKRIGHT}, 0.5)}};
+    mGaits[GAITTYPE::TRIPLE].mGaitGroups = {{GaitGroup({LEG::FRONTLEFT, LEG::MIDRIGHT, LEG::BACKLEFT}, 0.8),
+                                             GaitGroup({LEG::FRONTRIGHT, LEG::MIDLEFT, LEG::BACKRIGHT}, 0.8)}};
 
     mGaits[GAITTYPE::WAVE].mGaitGroups = {GaitGroup({LEG::FRONTRIGHT, LEG::MIDRIGHT, LEG::BACKRIGHT}, 0.6),
                                           GaitGroup({LEG::FRONTLEFT, LEG::MIDLEFT, LEG::BACKLEFT}, 0.6)};
@@ -434,7 +434,7 @@ void Hexapod::checkJoystickPos()
         }
         else if (mMoveState == MOVESTATE::MOVING)
         {
-            if (mStepDistMulti == 0)
+            if (compareFloats(mTargetFaceDir, mFaceDir) && mStepDistMulti == 0)
                 mMoveState = MOVESTATE::STOPSTARTED;
             else
                 mTargetFaceDir = mFaceDir + mStepRotAngle;
