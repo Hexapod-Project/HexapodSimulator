@@ -528,12 +528,12 @@ void Hexapod::walk()
 {
     float stepNormTimeLapsed = normalizeTimelapsed(mStepStartTime, mStepDuration);
 
-    if (stepNormTimeLapsed >= 1)
+    if (stepNormTimeLapsed > 1)
     {
         if (mGroupStoppedCount < mCurrGaitGrpSize - 1)
         {
             setNextStep();
-            setNextStepRot();
+            setNextStepRot();         
             stepNormTimeLapsed = 0;
 
             if (mMoveState == MOVESTATE::STOPPING)
@@ -553,19 +553,17 @@ void Hexapod::walk()
 
     if (stepNormTimeLapsed >= 0)
     {
-        vec3 rootPos = mBody.getLocalPos();
-
         //Set the new foot target position
         for (int i = 0; i < mLegIndices.size(); i++)
         {
             float legNormTimeLapsed = normalizeTimelapsed(mStepStartTime + BASE_STEP_DURATION * mStepTimeOffset * i, BASE_STEP_DURATION);
 
             if (legNormTimeLapsed < 0 || legNormTimeLapsed > 1)
-                continue;
+                continue;            
 
             int legIdx = mLegIndices[i];
 
-            float footYOffset = sin(M_PI * legNormTimeLapsed) * mStepHeight + mPrevStepHeight[legIdx] * (1 - legNormTimeLapsed);
+            float footYOffset = sin(M_PI * legNormTimeLapsed) * mStepHeight;
             float footXOffset = mStepDist[legIdx].x * legNormTimeLapsed;
             float footZOffset = mStepDist[legIdx].z * legNormTimeLapsed;
 

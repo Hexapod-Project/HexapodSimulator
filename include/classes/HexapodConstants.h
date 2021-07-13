@@ -12,12 +12,12 @@ namespace HexapodConstants
 
     const float HIP_LENGTH = 5.2;
     const float FEMUR_LENGTH = 4.7;
-    const float TIBIA_LENGTH = 9;
-    const float BODY_THICKNESS = 8;
-    const float BODY_WIDTH = 16;
+    const float TIBIA_LENGTH = 8.5;
+    const float BODY_THICKNESS = 3.5;
+    const float BODY_WIDTH = 13.5;
     const float BODY_LENGTH = 16;
 
-    const float LEG_DIST_FROM_ORIGIN = 6.7;
+    //const float LEG_DIST_FROM_ORIGIN = 6.7;
 
     //The width of the head and back
     /**
@@ -32,17 +32,15 @@ namespace HexapodConstants
     const float BODY_START_Y = 2;
 
     //Leg Front Back X Offset
-    const float X_FB_LEG_OFFSET = cos(M_PI_4) * LEG_DIST_FROM_ORIGIN;
-    const float X_MID_LEG_OFFSET = LEG_DIST_FROM_ORIGIN;
+    const float X_FB_LEG_OFFSET = cos(M_PI/3) * 7;
+    const float X_MID_LEG_OFFSET = 5.5;
     const float Y_LEG_OFFSET = AXIS_HEIGHT / 2 - BODY_Y_OFFSET;
     //Leg Front Back Z offset
-    const float Z_FB_LEG_OFFSET = sin(M_PI_4) * LEG_DIST_FROM_ORIGIN;
+    const float Z_FB_LEG_OFFSET = sin(M_PI/3) * 7;
 
     //The distance of the foot is the radius of a circle and the body's center is the origin
-    const float FOOT_DIST = BODY_WIDTH + 3;
+    const float FOOT_DIST = BODY_LENGTH / 2 + HIP_LENGTH + 5;
     const float FOOT_Y = 0;
-
-    const float FEET_CIRCUMFERENCE = 2 * M_PI * FOOT_DIST;
 
     const float RIGHT_FORWARD = 3 * M_PI / 4;
     const float FORWARD = M_PI / 2;
@@ -54,8 +52,8 @@ namespace HexapodConstants
     const float LEFT_BACKWARD = 7 * M_PI / 4;
 
     //Walk properties
-    const int BASE_STEP_DURATION = 350;      //Duration in ms that one walk cycle takes to complete
-    const float MAXRAD_PERSTEP = M_PI_2 / 8; //Maximum angle of rotation per step
+    const int BASE_STEP_DURATION = 1000;                     //Duration in ms that one walk cycle takes to complete
+    const float MAXRAD_PERSTEP = 25 * M_PI / 180;         //Maximum angle of rotation per step
     const float MAXDEG_PERSTEP = toDegrees(MAXRAD_PERSTEP); //Maximum angle of rotation per step
 
     const float MIN_STEP_HEIGHT = 0.5;
@@ -65,6 +63,6 @@ namespace HexapodConstants
     const int JOYSTICK_POSITIVE_MAXPOS = 255;
     const int JOYSTICK_NEGATIVE_MAXPOS = 1;
     const int JOYSTICK_MAXDIST = 127;
-    const int JOYSTICK_ZERO_POS = 128;    
+    const int JOYSTICK_ZERO_POS = 128;
 }
 #endif
